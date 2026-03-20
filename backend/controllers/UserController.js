@@ -1,6 +1,6 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/UserModel");
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import User from "../models/UserModel.js";
 
 // Generate JWT
 const generateToken = (user) => {
@@ -18,7 +18,7 @@ const generateToken = (user) => {
 };
 
 // Register
-exports.registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   try {
     const { fullName, email, password, role } = req.body;
 
@@ -70,7 +70,7 @@ exports.registerUser = async (req, res) => {
 };
 
 // Login
-exports.loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -117,7 +117,7 @@ exports.loginUser = async (req, res) => {
 };
 
 // Get logged-in user profile
-exports.getProfile = async (req, res) => {
+export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
 
@@ -137,7 +137,7 @@ exports.getProfile = async (req, res) => {
 };
 
 // Update profile
-exports.updateProfile = async (req, res) => {
+export const updateProfile = async (req, res) => {
   try {
     const { fullName, email } = req.body;
 
@@ -169,7 +169,7 @@ exports.updateProfile = async (req, res) => {
 };
 
 // Update user role/type
-exports.updateUserRole = async (req, res) => {
+export const updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;
     const { id } = req.params;
@@ -206,7 +206,7 @@ exports.updateUserRole = async (req, res) => {
 };
 
 // Update no-show count
-exports.updateNoShowCount = async (req, res) => {
+export const updateNoShowCount = async (req, res) => {
   try {
     const { id } = req.params;
     const { incrementBy = 1 } = req.body;
@@ -241,7 +241,7 @@ exports.updateNoShowCount = async (req, res) => {
 };
 
 // Update penalty manually
-exports.updatePenaltyStatus = async (req, res) => {
+export const updatePenaltyStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { penaltyStatus } = req.body;

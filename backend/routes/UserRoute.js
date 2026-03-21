@@ -10,6 +10,7 @@ import {
   updateUserRole,
   updateNoShowCount,
   updatePenaltyStatus,
+  getAllUsers,
 } from "../controllers/UserController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
@@ -29,5 +30,8 @@ router.patch("/role/:id", authMiddleware, adminMiddleware, updateUserRole);
 // Admin-only no-show / penalty updates
 router.patch("/no-show/:id", authMiddleware, adminMiddleware, updateNoShowCount);
 router.patch("/penalty/:id", authMiddleware, adminMiddleware, updatePenaltyStatus);
+
+// Get all users
+router.get("/all", getAllUsers);
 
 export default router;

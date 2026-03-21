@@ -6,9 +6,17 @@ import { MailIcon, LockIcon, UserIcon, ArrowLeftIcon, GraduationCapIcon, StoreIc
 export function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [selectedRole, setSelectedRole] = useState('student');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
     const navigate = useNavigate();
     const handleMockSubmit = (e) => {
         e.preventDefault();
+        if (!isLogin && password !== confirmPassword) {
+            setErrorMsg("Passwords do not match!");
+            return;
+        }
+        setErrorMsg('');
         // Mock routing based on role
         if (selectedRole === 'student')
             navigate('/student');
@@ -28,11 +36,11 @@ export function LoginPage() {
             label: 'Vendor',
             icon: StoreIcon,
         },
-        {
-            id: 'admin',
-            label: 'Admin',
-            icon: ShieldCheckIcon,
-        },
+        // {
+        //     id: 'admin',
+        //     label: 'Admin',
+        //     icon: ShieldCheckIcon,
+        // },
     ];
     return (<div className="min-h-screen flex items-center justify-center bg-surface-50 p-4 relative overflow-hidden">
       {/* Background decorative elements */}
@@ -68,6 +76,12 @@ export function LoginPage() {
             </button>
           </div>
 
+          {errorMsg && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm text-center">
+              {errorMsg}
+            </div>
+          )}
+
           <form onSubmit={handleMockSubmit} className="space-y-5">
             {!isLogin && (<motion.div initial={{
                 opacity: 0,
@@ -83,7 +97,7 @@ export function LoginPage() {
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400">
                       <UserIcon size={18}/>
                     </div>
-                    <input required placeholder="Alex Johnson" className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
+                    <input required placeholder="add your name" className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
                   </div>
                 </div>
 
@@ -114,7 +128,7 @@ export function LoginPage() {
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400">
                   <MailIcon size={18}/>
                 </div>
-                <input required type="email" placeholder="alex@university.edu" className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
+                <input required type="email" placeholder="example@sliit.lk" className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
               </div>
             </div>
 
@@ -126,7 +140,7 @@ export function LoginPage() {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400">
                     <LockIcon size={18}/>
                   </div>
-                  <input required type="password" placeholder="••••••••" className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
+                  <input required type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
                 </div>
               </div>
               {isLogin && (<div className="flex justify-end">
@@ -134,6 +148,17 @@ export function LoginPage() {
                     Forgot password?
                   </a>
                 </div>)}
+              {!isLogin && (
+                <div className="w-full flex flex-col gap-1.5 mt-4">
+                  <label className="text-sm font-medium text-surface-700">Confirm Password</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400">
+                      <LockIcon size={18}/>
+                    </div>
+                    <input required type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Submit Button Replacement */}

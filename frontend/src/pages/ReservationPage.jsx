@@ -18,13 +18,13 @@ const LOCATIONS = [
     id: 'main-dining',
     name: 'Main Dining Area',
     tables: [
-      { id: 1, seats: 4, status: 'available' },
+      { id: 1, seats: 2, status: 'available' },
       { id: 2, seats: 4, status: 'occupied' },
       { id: 3, seats: 4, status: 'available' },
       { id: 4, seats: 4, status: 'available' },
       { id: 5, seats: 4, status: 'occupied' },
       { id: 6, seats: 4, status: 'available' },
-      { id: 7, seats: 4, status: 'available' },
+      { id: 7, seats: 1, status: 'available' },
       { id: 8, seats: 4, status: 'available' },
     ]
   },

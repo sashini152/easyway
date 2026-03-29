@@ -4,6 +4,12 @@ import { CalendarIcon, UsersIcon, CheckCircleIcon, QrCodeIcon, } from 'lucide-re
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 
 const TIME_SLOTS = [
+
+    { time: '8:30 AM', available: true },
+    { time: '9:00 AM', available: true },
+    { time: '9:30 AM', available: true },
+    { time: '10:00 AM', available: true },
+    { time: '10:30 AM', available: true },
     { time: '11:00 AM', available: true },
     { time: '11:30 AM', available: true },
     { time: '12:00 PM', available: false },
@@ -12,6 +18,15 @@ const TIME_SLOTS = [
     { time: '1:30 PM', available: true },
     { time: '2:00 PM', available: true },
     { time: '2:30 PM', available: true },
+    { time: '3:00 PM', available: true },
+    { time: '3:30 PM', available: true },
+    { time: '4:00 PM', available: true },
+    { time: '4:30 PM', available: true },
+    { time: '5:00 PM', available: true },
+    { time: '5:30 PM', available: true },
+    { time: '6:00 PM', available: true },
+    { time: '6:30 PM', available: true },
+    { time: '7:00 PM', available: true },
 ];
 const LOCATIONS = [
   {
@@ -47,7 +62,21 @@ const LOCATIONS = [
       { id: 15, seats: 2, status: 'available' },
       { id: 16, seats: 4, status: 'available' },
     ]
-  }
+  },
+    {
+    id: 'birdnest-dining',
+    name: 'Bird Nest Canteen Dining Area',
+    tables: [
+      { id: 1, seats: 2, status: 'available' },
+      { id: 2, seats: 4, status: 'occupied' },
+      { id: 3, seats: 4, status: 'available' },
+      { id: 4, seats: 4, status: 'available' },
+      { id: 5, seats: 4, status: 'occupied' },
+      { id: 6, seats: 4, status: 'available' },
+      { id: 7, seats: 1, status: 'available' },
+      { id: 8, seats: 4, status: 'available' },
+    ]
+  },
 ];
 
 export function ReservationPage() {
@@ -80,15 +109,42 @@ export function ReservationPage() {
               </h2>
 
               <div className="flex gap-3 mb-6 overflow-x-auto pb-2 hide-scrollbar">
-                {['Today', 'Tomorrow', 'Wed, Oct 21', 'Thu, Oct 22'].map((date) => (<button key={date} onClick={() => setSelectedDate(date)} className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${selectedDate === date ? 'bg-surface-900 text-white shadow-md' : 'bg-surface-50 text-surface-600 hover:bg-surface-100'}`}>
+                {['Today', 'Tomorrow', 'Tue, March 31', 'Wed, April 1'].map((date) => (<button key={date} onClick={() => setSelectedDate(date)} className={`px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${selectedDate === date ? 'bg-surface-900 text-white shadow-md' : 'bg-surface-50 text-surface-600 hover:bg-surface-100'}`}>
                       {date}
                     </button>))}
               </div>
 
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {TIME_SLOTS.map((slot, i) => (<button key={i} disabled={!slot.available} onClick={() => setSelectedTime(slot.time)} className={`py-3 rounded-xl text-sm font-medium transition-all border ${!slot.available ? 'bg-surface-50 border-surface-100 text-surface-400 cursor-not-allowed' : selectedTime === slot.time ? 'bg-brand-50 border-brand-500 text-brand-700 shadow-sm' : 'bg-surface-0 border-surface-200 text-surface-700 hover:border-brand-300'}`}>
-                    {slot.time}
-                  </button>))}
+                {TIME_SLOTS.map((slot, i) => {
+                  let isSlotAvailable = slot.available;
+                  
+                  if (selectedDate === 'Today') {
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    
+                    const [timePart, modifier] = slot.time.split(' ');
+                    let [hours, minutes] = timePart.split(':').map(Number);
+                    
+                    if (modifier === 'PM' && hours !== 12) hours += 12;
+                    if (modifier === 'AM' && hours === 12) hours = 0;
+                    
+                    if (hours < currentHour || (hours === currentHour && minutes <= currentMinute)) {
+                      isSlotAvailable = false;
+                    }
+                  }
+
+                  return (
+                    <button 
+                      key={i} 
+                      disabled={!isSlotAvailable} 
+                      onClick={() => setSelectedTime(slot.time)} 
+                      className={`py-3 rounded-xl text-sm font-medium transition-all border ${!isSlotAvailable ? 'bg-surface-50 border-surface-100 text-surface-400 cursor-not-allowed' : selectedTime === slot.time ? 'bg-brand-50 border-brand-500 text-brand-700 shadow-sm' : 'bg-surface-0 border-surface-200 text-surface-700 hover:border-brand-300'}`}
+                    >
+                      {slot.time}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -153,17 +209,33 @@ export function ReservationPage() {
                   </div>
 
                   <div className="grid grid-cols-4 gap-6">
-                    {LOCATIONS.find(l => l.id === selectedLocation)?.tables.map((table) => (<button key={table.id} disabled={table.status === 'occupied'} onClick={() => setSelectedTable(table.id)} className={`
-                          relative aspect-square rounded-2xl flex flex-col items-center justify-center transition-all
-                          ${table.status === 'occupied' ? 'bg-red-50 border-2 border-red-200 text-red-400 cursor-not-allowed' : selectedTable === table.id ? 'bg-brand-500 border-2 border-brand-600 text-white shadow-glow-orange scale-105 z-10' : 'bg-success-50 border-2 border-success-400 text-success-700 hover:bg-success-100'}
-                        `}>
-                        <span className="font-bold text-lg mb-1">
-                          T{table.id}
-                        </span>
-                        <span className="text-xs opacity-80">
-                          {table.seats} Seats
-                        </span>
-                      </button>))}
+                    {LOCATIONS.find(l => l.id === selectedLocation)?.tables.map((table) => {
+                      const isTooSmall = table.seats < selectedSeats;
+                      const isOccupied = table.status === 'occupied';
+                      const isDisabled = isOccupied || isTooSmall;
+                      
+                      return (
+                        <button 
+                          key={table.id} 
+                          disabled={isDisabled} 
+                          onClick={() => setSelectedTable(table.id)} 
+                          className={`
+                            relative aspect-square rounded-2xl flex flex-col items-center justify-center transition-all
+                            ${isOccupied ? 'bg-red-50 border-2 border-red-200 text-red-400 cursor-not-allowed' 
+                              : isTooSmall ? 'bg-surface-100 border-2 border-surface-200 text-surface-400 cursor-not-allowed opacity-60'
+                              : selectedTable === table.id ? 'bg-brand-500 border-2 border-brand-600 text-white shadow-glow-orange scale-105 z-10' 
+                              : 'bg-success-50 border-2 border-success-400 text-success-700 hover:bg-success-100'}
+                          `}
+                        >
+                          <span className="font-bold text-lg mb-1">
+                            T{table.id}
+                          </span>
+                          <span className="text-xs opacity-80">
+                            {table.seats} {table.seats === 1 ? 'Seat' : 'Seats'}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

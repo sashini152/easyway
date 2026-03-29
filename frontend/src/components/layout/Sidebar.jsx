@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, CalendarIcon, SettingsIcon, LogOutIcon, XIcon } from 'lucide-react';
+import { HomeIcon, CalendarIcon, SettingsIcon, LogOutIcon, XIcon, UserIcon } from 'lucide-react';
 
 export function Sidebar({ role, onClose }) {
   const location = useLocation();
 
   const navLinks = [
     { name: 'Dashboard', path: `/${role}`, icon: HomeIcon },
-    { name: 'Reservations', path: '/reservation', icon: CalendarIcon },
+    { name: 'Reservations', path: '/table', icon: CalendarIcon },
+    { name: 'Profile', path: '/profile', icon: UserIcon },
     { name: 'Settings', path: '/settings', icon: SettingsIcon },
   ];
 
@@ -53,6 +54,19 @@ export function Sidebar({ role, onClose }) {
       </div>
 
       <div className="p-4 border-t border-gray-200">
+        <Link to="/profile" className="block">
+          <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-50 transition-colors cursor-pointer mb-2">
+            <div className="bg-brand-100 text-brand-700 relative inline-flex items-center justify-center rounded-full overflow-hidden font-semibold border-2 border-surface-0 shadow-sm w-10 h-10 text-sm">
+              <span>S</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-surface-900 truncate">
+                Senrith Fernando
+              </p>
+              <p className="text-xs text-surface-500 truncate">Student</p>
+            </div>
+          </div>
+        </Link>
         <Link
           to="/login"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"

@@ -5,9 +5,9 @@ import { CalendarClockIcon, UtensilsCrossedIcon, UserIcon, QrCodeIcon, ClockIcon
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 
 const RECENT_ORDERS = [
-    { id: 'ORD-8923', items: 'Jollof Rice & Chicken', total: '₦1,500', status: 'Completed', date: 'Today, 12:30 PM' },
-    { id: 'ORD-8910', items: 'Fresh Fruit Smoothie', total: '₦800', status: 'Completed', date: 'Yesterday, 2:15 PM' },
-    { id: 'ORD-8854', items: 'Beef Burger & Fries', total: '₦2,500', status: 'Completed', date: 'Oct 15, 1:00 PM' },
+    { id: 'ORD-8923', items: 'Jollof Rice & Chicken', total: 'Rs.1,500', status: 'Completed', date: 'Today, 12:30 PM' },
+    { id: 'ORD-8910', items: 'Fresh Fruit Smoothie', total: 'Rs.800', status: 'Completed', date: 'Yesterday, 2:15 PM' },
+    { id: 'ORD-8854', items: 'Beef Burger & Fries', total: 'Rs.2,500', status: 'Completed', date: 'Oct 15, 1:00 PM' },
 ];
 const NOTIFICATIONS = [
     { id: 1, title: 'Reservation Confirmed', message: "Table 12 at Mama's Kitchen is reserved for 1:00 PM.", time: '10 min ago', unread: true },
@@ -38,7 +38,7 @@ export function StudentDashboard() {
           {[
             { title: 'Reserve Table', icon: CalendarClockIcon, color: 'from-brand-500 to-brand-400', path: '/table' },
             { title: 'Order Food', icon: UtensilsCrossedIcon, color: 'from-success-500 to-success-400', path: '/menu' },
-            { title: 'My Profile', icon: UserIcon, color: 'from-blue-500 to-blue-400', path: '#' },
+            { title: 'My Profile', icon: UserIcon, color: 'from-blue-500 to-blue-400', path: '/profile' },
             { title: 'Scan QR', icon: QrCodeIcon, color: 'from-warm-500 to-warm-400', path: '#' },
         ].map((action, i) => (<Link key={i} to={action.path}>
               <motion.div className="bg-surface-0 rounded-2xl overflow-hidden shadow-card border border-surface-100 p-4 transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 cursor-pointer flex items-center gap-4 border-none shadow-sm bg-surface-0">
@@ -173,12 +173,12 @@ export function StudentDashboard() {
               <h3 className="text-surface-400 text-sm font-medium mb-1">
                 This Week's Spending
               </h3>
-              <p className="text-3xl font-bold mb-6">₦8,500</p>
+              <p className="text-3xl font-bold mb-6">RS.3,000</p>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-surface-300">Food Orders</span>
-                  <span className="font-medium">₦7,000</span>
+                  <span className="font-medium">Rs.3,000</span>
                 </div>
                 <div className="w-full bg-surface-700 rounded-full h-1.5">
                   <div className="bg-brand-500 h-1.5 rounded-full" style={{ width: '80%', }}></div>
@@ -186,7 +186,7 @@ export function StudentDashboard() {
 
                 <div className="flex items-center justify-between text-sm pt-2">
                   <span className="text-surface-300">Reservations</span>
-                  <span className="font-medium">₦1,500</span>
+                  <span className="font-medium">6</span>
                 </div>
                 <div className="w-full bg-surface-700 rounded-full h-1.5">
                   <div className="bg-warm-500 h-1.5 rounded-full" style={{ width: '20%', }}></div>

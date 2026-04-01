@@ -24,6 +24,21 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "vendor", "admin"],
       default: "student",
     },
+    phoneNumber: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    studentId: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    department: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     noShowCount: {
       type: Number,
       default: 0,

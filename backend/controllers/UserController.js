@@ -59,6 +59,9 @@ export const registerUser = async (req, res) => {
         role: newUser.role,
         noShowCount: newUser.noShowCount,
         penaltyStatus: newUser.penaltyStatus,
+        phoneNumber: newUser.phoneNumber,
+        studentId: newUser.studentId,
+        department: newUser.department,
       },
     });
   } catch (error) {
@@ -106,6 +109,9 @@ export const loginUser = async (req, res) => {
         role: user.role,
         noShowCount: user.noShowCount,
         penaltyStatus: user.penaltyStatus,
+        phoneNumber: user.phoneNumber,
+        studentId: user.studentId,
+        department: user.department,
       },
     });
   } catch (error) {
@@ -139,13 +145,16 @@ export const getProfile = async (req, res) => {
 // Update profile
 export const updateProfile = async (req, res) => {
   try {
-    const { fullName, email } = req.body;
+    const { fullName, email, phoneNumber, studentId, department } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
         fullName,
         email,
+        phoneNumber,
+        studentId,
+        department,
       },
       { new: true, runValidators: true }
     ).select("-password");
@@ -158,7 +167,17 @@ export const updateProfile = async (req, res) => {
 
     res.status(200).json({
       message: "Profile updated successfully",
-      user: updatedUser,
+      user: {
+        id: updatedUser._id,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        noShowCount: updatedUser.noShowCount,
+        penaltyStatus: updatedUser.penaltyStatus,
+        phoneNumber: updatedUser.phoneNumber,
+        studentId: updatedUser.studentId,
+        department: updatedUser.department,
+      },
     });
   } catch (error) {
     res.status(500).json({

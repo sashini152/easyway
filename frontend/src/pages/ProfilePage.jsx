@@ -1,27 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { UserIcon, MailIcon, ShieldIcon, AlertCircleIcon, EditIcon, SaveIcon, PhoneIcon, CreditCardIcon, BuildingIcon, CameraIcon } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 
 export function ProfilePage() {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [userProfile, setUserProfile] = useState({
-    fullName: 'Senrith Fernando',
-    email: 'rihansenrith@gmail.com',
-    phoneNumber: '+94 77 983 5388',
-    studentId: 'IT23145498',
-    department: 'Information Technology',
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    studentId: '',
+    department: '',
     role: 'Student',
-    noFoodOrders: 2,
+    noFoodOrders: 0,
     penaltyStatus: 'None',
   });
+
+  useEffect(() => {
+    const storedUserStr = localStorage.getItem('user');
+    if (storedUserStr) {
+      const storedUser = JSON.parse(storedUserStr);
+      setUserProfile((prev) => ({
+        ...prev,
+        fullName: storedUser.fullName || '',
+        email: storedUser.email || '',
+        phoneNumber: storedUser.phoneNumber || '',
+        studentId: storedUser.studentId || '',
+        department: storedUser.department || '',
+        role: storedUser.role || 'Student',
+        penaltyStatus: storedUser.penaltyStatus || 'None',
+      }));
+    } else {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setUserProfile({ ...userProfile, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validations
     if (!userProfile.fullName.trim()) {
       setErrorMsg("Full name is required.");
@@ -34,21 +55,52 @@ export function ProfilePage() {
       return;
     }
 
-    const phoneRegex = /^\+?[0-9\s\-]{9,15}$/;
-    if (!phoneRegex.test(userProfile.phoneNumber)) {
-      setErrorMsg("Please enter a valid phone number.");
-      return;
+    if (userProfile.phoneNumber) {
+      const phoneRegex = /^\+?[0-9\s\-]{9,15}$/;
+      if (!phoneRegex.test(userProfile.phoneNumber)) {
+        setErrorMsg("Please enter a valid phone number.");
+        return;
+      }
     }
 
-    const studentIdRegex = /^IT\d{8}$/i;
-    if (!studentIdRegex.test(userProfile.studentId)) {
-      setErrorMsg("Student ID must be 'IT' followed by 8 digits.");
-      return;
+    if (userProfile.studentId) {
+      const studentIdRegex = /^IT\d{8}$/i;
+      if (!studentIdRegex.test(userProfile.studentId)) {
+        setErrorMsg("Student ID must be 'IT' followed by 8 digits.");
+        return;
+      }
     }
 
-    setErrorMsg('');
-    setIsEditing(false);
-    // Add save logic here later
+    try {
+      const response = await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          fullName: userProfile.fullName,
+          email: userProfile.email,
+          phoneNumber: userProfile.phoneNumber,
+          studentId: userProfile.studentId,
+          department: userProfile.department
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setErrorMsg(data.message || 'Failed to update profile');
+        return;
+      }
+
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      localStorage.setItem('user', JSON.stringify({ ...storedUser, ...data.user }));
+      
+      setErrorMsg('');
+      setIsEditing(false);
+    } catch (error) {
+      setErrorMsg('Network error while saving profile.');
+    }
   };
 
   return (
@@ -97,7 +149,7 @@ export function ProfilePage() {
             <div className="flex items-center gap-6 mb-8 pb-8 border-b border-surface-100">
               <div className="relative">
                 <div className="w-24 h-24 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-3xl font-bold border-4 border-surface-0 shadow-sm">
-                  {userProfile.fullName.charAt(0)}
+                  {userProfile.fullName ? userProfile.fullName.charAt(0).toUpperCase() : '?'}
                 </div>
                 {isEditing && (
                   <button className="absolute bottom-0 right-0 p-1.5 bg-surface-900 text-white rounded-full hover:bg-surface-800 transition-colors shadow-sm focus:outline-none">

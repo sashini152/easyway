@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CalendarClockIcon, UtensilsCrossedIcon, UserIcon, QrCodeIcon, ClockIcon, MapPinIcon, BellIcon, } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
@@ -24,12 +24,27 @@ export function StudentDashboard() {
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1 },
     };
+
+    const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        } else {
+            navigate('/login');
+        }
+    }, [navigate]);
+
     return (<DashboardLayout role="student">
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-surface-900">
-          Good morning, Fernando! 👋
+          Good morning, {user?.fullName?.split(' ')[0] || 'Student'}! 👋
         </h1>
-        <p className="text-surface-500 mt-1">Sunday, March 22, 2026</p>
+        <p className="text-surface-500 mt-1">
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
       </div>
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-12 gap-6">

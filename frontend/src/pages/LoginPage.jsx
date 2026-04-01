@@ -6,24 +6,48 @@ import { MailIcon, LockIcon, UserIcon, ArrowLeftIcon, GraduationCapIcon, StoreIc
 export function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [selectedRole, setSelectedRole] = useState('student');
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
     const navigate = useNavigate();
-    const handleMockSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setErrorMsg('');
+
         if (!isLogin && password !== confirmPassword) {
             setErrorMsg("Passwords do not match!");
             return;
         }
-        setErrorMsg('');
-        // Mock routing based on role
-        if (selectedRole === 'student')
-            navigate('/student');
-        else if (selectedRole === 'vendor')
-            navigate('/vendor');
-        else
-            navigate('/admin');
+
+        const endpoint = isLogin ? '/api/users/login' : '/api/users/register';
+        const payload = isLogin 
+            ? { email, password }
+            : { fullName, email, password, role: selectedRole };
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setErrorMsg(data.message || 'Authentication failed');
+                return;
+            }
+
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            navigate('/');
+
+        } catch (error) {
+            setErrorMsg("Network error. Please try again later.");
+        }
     };
     const roles = [
         {
@@ -82,7 +106,7 @@ export function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleMockSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (<motion.div initial={{
                 opacity: 0,
                 height: 0,
@@ -97,7 +121,7 @@ export function LoginPage() {
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400">
                       <UserIcon size={18}/>
                     </div>
-                    <input required placeholder="add your name" className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
+                    <input required placeholder="add your name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
                   </div>
                 </div>
 
@@ -128,7 +152,7 @@ export function LoginPage() {
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400">
                   <MailIcon size={18}/>
                 </div>
-                <input required type="email" placeholder="example@sliit.lk" className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
+                <input required type="email" placeholder="example@sliit.lk" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-11 pr-4 py-2.5 bg-surface-50 border rounded-xl text-surface-900 placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:bg-surface-0 disabled:opacity-50 disabled:bg-surface-100 border-surface-200 focus:ring-brand-400 focus:border-brand-400" />
               </div>
             </div>
 

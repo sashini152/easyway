@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
+/* ================= THEME COLORS ================= */
 @theme {
-  --color-surface-0: 
+  --color-surface-0: #ffffff;
   --color-surface-50: var(--color-slate-50);
   --color-surface-100: var(--color-slate-100);
   --color-surface-200: var(--color-slate-200);
@@ -34,16 +35,127 @@
   --color-success-700: var(--color-green-700);
   --color-success-800: var(--color-green-800);
   --color-success-900: var(--color-green-900);
-
-  --color-warm-50: var(--color-amber-50);
-  --color-warm-100: var(--color-amber-100);
-  --color-warm-200: var(--color-amber-200);
-  --color-warm-300: var(--color-amber-300);
-  --color-warm-400: var(--color-amber-400);
-  --color-warm-500: var(--color-amber-500);
-  --color-warm-600: var(--color-amber-600);
-  --color-warm-700: var(--color-amber-700);
-  --color-warm-800: var(--color-amber-800);
-  --color-warm-900: var(--color-amber-900);
 }
 
+/* ================= BASE ================= */
+@layer base {
+  body {
+    @apply bg-white text-gray-900;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  *:focus-visible {
+    @apply ring-2 ring-orange-500 ring-offset-2;
+    outline: none;
+  }
+
+  ::selection {
+    @apply bg-orange-200 text-orange-900;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+}
+
+/* ================= COMPONENTS ================= */
+@layer components {
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-orange-500 text-white px-6 py-3 rounded-xl shadow-md hover:bg-orange-600;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-gray-800 border border-gray-300 px-6 py-3 rounded-xl hover:border-orange-500 hover:text-orange-600;
+  }
+
+  /* Card */
+  .card {
+    @apply bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition;
+  }
+
+  .card-header {
+    @apply p-6 border-b border-gray-200;
+  }
+
+  .card-content {
+    @apply p-6;
+  }
+
+  .card-footer {
+    @apply p-6 border-t border-gray-200 bg-gray-50;
+  }
+
+  /* Input */
+  .input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-orange-500;
+  }
+
+  /* Badge */
+  .badge {
+    @apply px-2 py-1 text-xs rounded-full font-semibold;
+  }
+
+  .badge-primary {
+    @apply bg-orange-100 text-orange-700;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-700;
+  }
+
+  /* Layout */
+  .container {
+    @apply max-w-7xl mx-auto px-6;
+  }
+
+  .section {
+    @apply py-20;
+  }
+
+  /* Text */
+  .text-gradient {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-yellow-500;
+  }
+}
+
+/* ================= UTILITIES ================= */
+@layer utilities {
+
+  .hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-1;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+}

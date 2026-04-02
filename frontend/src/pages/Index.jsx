@@ -1,15 +1,46 @@
 import { useState, useEffect } from "react";
-import { shops as seedShops } from "@/data/mockData";
 import ShopCard from "@/components/ShopCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { storage, STORAGE_KEYS } from "@/lib/storage";
 import { UtensilsCrossed, Flame, Search } from "lucide-react";
+import { canteenAPI } from "../services/api";
 
 const Index = () => {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [shops, setShops] = useState(() => storage.get(STORAGE_KEYS.SHOPS, seedShops));
+  const [shops, setShops] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCanteens();
+  }, []);
+
+  const fetchCanteens = async () => {
+    try {
+      setLoading(true);
+      const response = await canteenAPI.getAllCanteens();
+      if (response.success) {
+        // Transform canteen data to match the shop card format
+        const transformedShops = response.data.canteens.map(canteen => ({
+          _id: canteen._id,
+          name: canteen.name,
+          description: canteen.description,
+          image: canteen.image,
+          location: `${canteen.address?.street || 'N/A'}, ${canteen.address?.city || 'N/A'}`,
+          rating: canteen.rating || 4.5,
+          status: canteen.status === 'active' ? 'open' : 'closed',
+          operatingHours: canteen.operatingHours,
+          contact: canteen.contact,
+          assignedShopOwner: canteen.assignedShopOwner
+        }));
+        setShops(transformedShops);
+      }
+    } catch (error) {
+      console.error('Error fetching canteens:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = shops.filter((shop) => {
     const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -21,9 +52,16 @@ const Index = () => {
     return matchesSearch;
   });
 
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.SHOPS, shops);
-  }, [shops]);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading canteens...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

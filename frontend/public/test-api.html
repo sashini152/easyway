@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>EasyWay API Test</h1>
+    
+    <div class="test-section">
+        <h2>Health Check</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Login Test</h2>
+        <button onclick="testLogin()">Test Login (Super Admin)</button>
+        <button onclick="testLoginUser()">Test Login (User)</button>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Canteens Test</h2>
+        <button onclick="testCanteens()">Test Get Canteens</button>
+        <div id="canteens-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Articles Test</h2>
+        <button onclick="testArticles()">Test Get Articles</button>
+        <div id="articles-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let authToken = null;
+
+        function showResult(elementId, result, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.className = `test-section ${isSuccess ? 'success' : 'error'}`;
+            element.innerHTML = `
+                <h3>${isSuccess ? '✅ Success' : '❌ Error'}</h3>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                showResult('health-result', data, response.ok);
+            } catch (error) {
+                showResult('health-result', { error: error.message }, false);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@easyway.com',
+                        password: 'admin123'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.data.token;
+                    localStorage.setItem('token', authToken);
+                }
+                showResult('login-result', data, response.ok);
+            } catch (error) {
+                showResult('login-result', { error: error.message }, false);
+            }
+        }
+
+        async function testLoginUser() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'alice@user.com',
+                        password: 'user123'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.data.token;
+                    localStorage.setItem('token', authToken);
+                }
+                showResult('login-result', data, response.ok);
+            } catch (error) {
+                showResult('login-result', { error: error.message }, false);
+            }
+        }
+
+        async function testCanteens() {
+            try {
+                const headers = {};
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
+                const response = await fetch(`${API_BASE}/canteens`, { headers });
+                const data = await response.json();
+                showResult('canteens-result', data, response.ok);
+            } catch (error) {
+                showResult('canteens-result', { error: error.message }, false);
+            }
+        }
+
+        async function testArticles() {
+            try {
+                const headers = {};
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
+                const response = await fetch(`${API_BASE}/articles`, { headers });
+                const data = await response.json();
+                showResult('articles-result', data, response.ok);
+            } catch (error) {
+                showResult('articles-result', { error: error.message }, false);
+            }
+        }
+
+        // Auto-test health on page load
+        window.onload = () => {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

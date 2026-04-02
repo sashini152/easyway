@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Frontend Connection Test</h1>
+    
+    <div class="test-section">
+        <h2>Step 1: Test Backend Connection</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Test Login (Clean Data)</h2>
+        <div>
+            <input type="email" id="test-email" placeholder="Email" value="admin@easyway.com">
+            <input type="password" id="test-password" placeholder="Password" value="admin123">
+            <button onclick="testLogin()">Test Login</button>
+        </div>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Test Login (With Quotes - Should Fail)</h2>
+        <div>
+            <input type="text" id="test-email-quotes" placeholder="Email with quotes" value='"admin@easyway.com"'>
+            <input type="password" id="test-password-quotes" placeholder="Password" value="admin123">
+            <button onclick="testLoginWithQuotes()">Test Login with Quotes</button>
+        </div>
+        <div id="login-quotes-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function showResult(elementId, result, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.className = `test-section ${isSuccess ? 'success' : 'error'}`;
+            element.innerHTML = `
+                <h3>${isSuccess ? '✅ Success' : '❌ Error'}</h3>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                showResult('health-result', data, response.ok);
+            } catch (error) {
+                showResult('health-result', { error: error.message }, false);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const email = document.getElementById('test-email').value;
+                const password = document.getElementById('test-password').value;
+                
+                // Clean the data like the frontend does
+                const cleanEmail = email.replace(/^"|"$/g, '').trim();
+                const cleanPassword = password.replace(/^"|"$/g, '').trim();
+                
+                console.log('Sending:', { email: cleanEmail, password: cleanPassword });
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: cleanEmail,
+                        password: cleanPassword
+                    })
+                });
+                const data = await response.json();
+                showResult('login-result', data, response.ok);
+            } catch (error) {
+                showResult('login-result', { error: error.message }, false);
+            }
+        }
+
+        async function testLoginWithQuotes() {
+            try {
+                const email = document.getElementById('test-email-quotes').value;
+                const password = document.getElementById('test-password-quotes').value;
+                
+                // Clean the data like the frontend does
+                const cleanEmail = email.replace(/^"|"$/g, '').trim();
+                const cleanPassword = password.replace(/^"|"$/g, '').trim();
+                
+                console.log('Original:', { email, password });
+                console.log('Cleaned:', { email: cleanEmail, password: cleanPassword });
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: cleanEmail,
+                        password: cleanPassword
+                    })
+                });
+                const data = await response.json();
+                showResult('login-quotes-result', data, response.ok);
+            } catch (error) {
+                showResult('login-quotes-result', { error: error.message }, false);
+            }
+        }
+
+        // Auto-test health on page load
+        window.onload = () => {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

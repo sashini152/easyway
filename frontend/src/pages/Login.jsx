@@ -15,17 +15,20 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate login process
-    setTimeout(() => {
-      const success = login(email, password);
-      if (success) {
-        // Login successful - navigation will be handled by AuthContext
-        window.location.href = "/";
-      } else {
-        alert("Invalid credentials. Try:\n\nAdmin: admin@sliit.lk / ADMIN123456\nStudent: student@sliit.lk / STD123456\nShop Admin: pscanteen@sliit.lk / PNS123456");
-      }
+    try {
+      // Clean up any extra quotes that might be accidentally included
+      const cleanEmail = email.replace(/^"|"$/g, '').trim();
+      const cleanPassword = password.replace(/^"|"$/g, '').trim();
+      
+      await login({ email: cleanEmail, password: cleanPassword });
+      // Login successful - navigation will be handled by AuthContext
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Login error:", error);
+      alert(`Login failed: ${error.message}\n\nTry these credentials:\nAdmin: admin@easyway.com / admin123\nShop Owner: john@shopowner.com / owner123\nUser: alice@user.com / user123`);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

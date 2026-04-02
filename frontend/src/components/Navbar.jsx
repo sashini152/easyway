@@ -43,7 +43,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', path: '/', icon: Home, description: 'Back to homepage' },
         { name: 'Canteens', path: '/canteens', icon: ShoppingBag, description: 'Browse all canteens' },
-        { name: 'Blog & News', path: '/blog', icon: FileText, description: 'Read articles and news' },
+        { name: 'Blog & News', path: '/admin/news', icon: FileText, description: 'Read articles and news' },
         { name: 'Offers', path: '/offers', icon: Percent, description: 'Special deals and promotions' },
         { name: 'Reserve Table', path: '/reservation', icon: CalendarCheck, description: 'Book your table' },
     ];
@@ -116,7 +116,7 @@ const Navbar = () => {
                                         Log in
                                     </Button>
                                 </Link>
-                                <Link to="/login">
+                                <Link to="/register">
                                     <Button className="bg-gradient-to-r from-brand-500 to-brand-400 text-white hover:from-brand-600 hover:to-brand-500 shadow-soft px-3 py-1.5 text-sm">
                                         Sign Up
                                     </Button>
@@ -224,7 +224,7 @@ const Navbar = () => {
                                                 Log in
                                             </Button>
                                         </Link>
-                                        <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
                                             <Button className="w-full bg-gradient-to-r from-brand-500 to-brand-400 text-white hover:from-brand-600 hover:to-brand-500 shadow-soft px-5 py-2.5 text-base">
                                                 Sign Up
                                             </Button>

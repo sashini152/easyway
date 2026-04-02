@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Canteens API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .canteen {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .canteen img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            float: left;
+            margin-right: 15px;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+        }
+        .active { background-color: #28a745; }
+        .inactive { background-color: #dc3545; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Canteens API</h1>
+    
+    <button onclick="testCanteensAPI()">Fetch Canteens from Database</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testCanteensAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/canteens');
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = `<h2>Found ${data.data.canteens.length} canteens in database:</h2>`;
+                    
+                    data.data.canteens.forEach(canteen => {
+                        html += `
+                            <div class="canteen">
+                                <img src="${canteen.image}" alt="${canteen.name}" 
+                                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(canteen.name)}&background=random'">
+                                <div>
+                                    <h3>${canteen.name}</h3>
+                                    <p><strong>Location:</strong> ${canteen.location}</p>
+                                    <p><strong>Description:</strong> ${canteen.description}</p>
+                                    <p><strong>Phone:</strong> ${canteen.contact?.phone || 'N/A'}</p>
+                                    <p><strong>Email:</strong> ${canteen.contact?.email || 'N/A'}</p>
+                                    <p><strong>Hours:</strong> ${canteen.operatingHours?.open} - ${canteen.operatingHours?.close}</p>
+                                    <p><strong>Status:</strong> <span class="status ${canteen.status}">${canteen.status}</span></p>
+                                    <p><strong>Shop Owner:</strong> ${canteen.assignedShopOwner?.name || 'Not assigned'}</p>
+                                </div>
+                                <div style="clear: both;"></div>
+                            </div>
+                        `;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<p>Error: ${data.message}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

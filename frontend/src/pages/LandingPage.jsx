@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -16,6 +16,7 @@ import {
     MessageCircleIcon,
     EyeIcon
 } from 'lucide-react';
+import { canteenAPI } from '../services/api';
 
 const FEATURED_MEALS = [
     { id: 1, name: 'Jollof Rice & Chicken', vendor: "Mama's Kitchen", price: '₦1,500', rating: 4.8, emoji: '🍛', color: 'from-orange-400 to-red-500' },
@@ -24,6 +25,7 @@ const FEATURED_MEALS = [
     { id: 4, name: 'Spicy Shawarma', vendor: 'The Grill House', price: '₦1,200', rating: 4.6, emoji: '🌯', color: 'from-yellow-400 to-orange-500' },
     { id: 5, name: 'Beef Burger & Fries', vendor: 'Campus Bites', price: '₦2,500', rating: 4.5, emoji: '🍔', color: 'from-amber-400 to-orange-600' },
     { id: 6, name: 'Vegetable Pasta', vendor: "Mama's Kitchen", price: '₦1,800', rating: 4.4, emoji: '🍝', color: 'from-red-400 to-orange-500' },
+    { id: 7, name: 'Chicken Fajita', vendor: 'The Grill House', price: '₦2,200', rating: 4.7, emoji: '🌮', color: 'from-orange-400 to-red-500' },
 ];
 
 const CANTEENS = [
@@ -57,15 +59,27 @@ const CANTEENS = [
         type: 'Healthy & Salads', 
         rating: 4.7, 
         status: 'open',
-        image: 'https://images.unsplash.com/photo-1555939594-58d6cb832d44?ixlib=rb-4.0.3&ixid=MnW0hc8hhE',
-        address: 'Business Faculty, SLIIT',
-        description: 'Modern canteen with healthy and international options',
-        menuItems: 38,
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&ixid=MnW0hc8hhE',
+        address: 'Business School, SLIIT',
+        description: 'Fresh and healthy options for business students',
+        menuItems: 28,
         avgPrice: '₦320'
     },
     { 
         id: 4, 
-        name: 'The Grill House', 
+        name: 'IT Faculty Canteen', 
+        type: 'Tech Cafe', 
+        rating: 4.6, 
+        status: 'open',
+        image: 'https://images.unsplash.com/photo-1555939594-58d6cb2a4003?ixlib=rb-4.0.3&ixid=MnW0hc8hhE',
+        address: 'IT Faculty, SLIIT',
+        description: 'Modern cafe with tech-themed decor and high-speed WiFi',
+        menuItems: 35,
+        avgPrice: '₦380'
+    },
+    { 
+        id: 5, 
+        name: 'Student Center Cafe', 
         type: 'Grill & BBQ', 
         rating: 4.6, 
         status: 'open',
@@ -170,6 +184,51 @@ const VENDORS = [
 ];
 
 export function LandingPage() {
+    const [canteens, setCanteens] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchCanteens();
+    }, []);
+
+    const fetchCanteens = async () => {
+        try {
+            setLoading(true);
+            const response = await canteenAPI.getAllCanteens();
+            if (response.success) {
+                // Transform canteen data to match the landing page format
+                const transformedCanteens = response.data.canteens.map(canteen => ({
+                    id: canteen._id,
+                    name: canteen.name,
+                    type: canteen.description?.substring(0, 20) + '...' || 'Local Cuisine',
+                    rating: canteen.rating || 4.5,
+                    status: canteen.status === 'active' ? 'open' : 'closed',
+                    image: canteen.image,
+                    address: `${canteen.address?.street || 'N/A'}, ${canteen.address?.city || 'N/A'}`,
+                    description: canteen.description,
+                    menuItems: Math.floor(Math.random() * 50) + 20, // Random number for demo
+                    avgPrice: '₦' + (Math.floor(Math.random() * 200) + 200)
+                }));
+                setCanteens(transformedCanteens);
+            }
+        } catch (error) {
+            console.error('Error fetching canteens:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-surface-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading canteens...</p>
+                </div>
+            </div>
+        );
+    }
+
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -254,7 +313,7 @@ export function LandingPage() {
           </div>
 
           <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {CANTEENS.map((canteen) => (<motion.div key={canteen.id} variants={itemVariants}>
+            {canteens.map((canteen) => (<motion.div key={canteen.id} variants={itemVariants}>
                 <div className="bg-surface-0 rounded-2xl shadow-card border border-surface-100 overflow-hidden h-full flex flex-col group transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 cursor-pointer">
                   <div className="relative h-48 w-full overflow-hidden">
                     <img

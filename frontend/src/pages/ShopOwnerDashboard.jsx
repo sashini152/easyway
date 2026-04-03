@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
     MapPinIcon, 
     PhoneIcon, 
@@ -10,7 +9,9 @@ import {
     UsersIcon,
     TrendingUpIcon,
     CalendarIcon,
-    PlusIcon
+    PlusIcon,
+    Trash2Icon,
+    PackageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,16 @@ const ShopOwnerDashboard = () => {
     const [canteen, setCanteen] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [menuItems, setMenuItems] = useState([]);
+    const [showMenuModal, setShowMenuModal] = useState(false);
+    const [editingMenuItem, setEditingMenuItem] = useState(null);
+    const [menuItemForm, setMenuItemForm] = useState({
+        name: '',
+        description: '',
+        price: '',
+        category: 'Main Course',
+        image: ''
+    });
     const [formData, setFormData] = useState({
         name: '',
         location: '',
@@ -46,34 +57,125 @@ const ShopOwnerDashboard = () => {
         facilities: []
     });
 
-    useEffect(() => {
-        fetchCanteen();
-    }, []);
-
-    const fetchCanteen = async () => {
+    // Menu Item Handlers
+    const handleMenuItemSubmit = async (e) => {
+        e.preventDefault();
+        
+        // Check if canteen is loaded
+        if (!canteen || !canteen._id) {
+            console.error('❌ Canteen not loaded, cannot add menu items');
+            alert('Please wait for shop data to load before adding menu items');
+            return;
+        }
+        
         try {
-            setLoading(true);
-            const response = await canteenAPI.getShopOwnerCanteen();
-            if (response.success) {
-                setCanteen(response.data);
-                setFormData({
-                    name: response.data.name,
-                    location: response.data.location,
-                    description: response.data.description,
-                    image: response.data.image,
-                    status: response.data.status,
-                    operatingHours: response.data.operatingHours,
-                    contact: response.data.contact,
-                    address: response.data.address,
-                    facilities: response.data.facilities || []
-                });
+            if (editingMenuItem) {
+                // Update existing item
+                const response = await canteenAPI.updateMenuItem(editingMenuItem._id, menuItemForm);
+                if (response.success) {
+                    setMenuItems(prev => prev.map(item => 
+                        item._id === editingMenuItem._id ? response.data : item
+                    ));
+                    setShowMenuModal(false);
+                    setEditingMenuItem(null);
+                    alert('Menu item updated successfully!');
+                }
+            } else {
+                // Add new item
+                console.log('🔍 Adding new menu item:', menuItemForm);
+                console.log('🏪 Canteen ID:', canteen._id);
+                const response = await canteenAPI.createMenuItem(canteen._id, menuItemForm);
+                console.log('📊 Create response:', response);
+                if (response.success) {
+                    setMenuItems(prev => [...prev, response.data]);
+                    setShowMenuModal(false);
+                    setMenuItemForm({
+                        name: '',
+                        description: '',
+                        price: '',
+                        category: 'Main Course',
+                        image: ''
+                    });
+                    alert('Menu item added successfully!');
+                }
             }
         } catch (error) {
-            console.error('Error fetching canteen:', error);
-            // If no canteen assigned, show message
-            if (error.message === 'No canteen assigned to you') {
-                setCanteen(null);
+            console.error('Error saving menu item:', error);
+            alert('Failed to save menu item. Please try again.');
+        }
+    };
+
+    const handleDeleteMenuItem = async (itemId) => {
+        // Check if canteen is loaded
+        if (!canteen || !canteen._id) {
+            console.error('❌ Canteen not loaded, cannot delete menu items');
+            alert('Please wait for shop data to load before deleting menu items');
+            return;
+        }
+        
+        if (window.confirm('Are you sure you want to delete this menu item?')) {
+            try {
+                const response = await canteenAPI.deleteMenuItem(itemId);
+                if (response.success) {
+                    setMenuItems(prev => prev.filter(item => item._id !== itemId));
+                    alert('Menu item deleted successfully!');
+                }
+            } catch (error) {
+                console.error('Error deleting menu item:', error);
+                alert('Failed to delete menu item. Please try again.');
             }
+        }
+    };
+
+    useEffect(() => {
+        fetchMyShop();
+    }, []);
+
+    const fetchMyShop = async () => {
+        try {
+            setLoading(true);
+            console.log('🔍 Fetching shop owner canteen...');
+            const response = await canteenAPI.getShopOwnerCanteen();
+            console.log('📊 Shop response:', response);
+            
+            if (response.success) {
+                console.log('✅ Canteen data loaded:', response.data);
+                setCanteen(response.data);
+                console.log('🏪 Canteen state set:', response.data);
+                setFormData({
+                    name: response.data.name || '',
+                    location: response.data.location || '',
+                    description: response.data.description || '',
+                    image: response.data.image || '',
+                    status: response.data.status || 'active',
+                    operatingHours: response.data.operatingHours || {
+                        open: '08:00',
+                        close: '20:00'
+                    },
+                    contact: response.data.contact || {
+                        phone: '',
+                        email: ''
+                    },
+                    address: response.data.address || {
+                        street: '',
+                        city: '',
+                        postalCode: ''
+                    },
+                    facilities: response.data.facilities || []
+                });
+                
+                // Fetch menu items for this canteen
+                if (response.data._id) {
+                    console.log('🍽 Fetching menu items for canteen:', response.data._id);
+                    const menuResponse = await canteenAPI.getMenuItems(response.data._id);
+                    console.log('📝 Menu response:', menuResponse);
+                    if (menuResponse.success) {
+                        setMenuItems(menuResponse.data);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('💥 Error fetching shop details:', error);
         } finally {
             setLoading(false);
         }
@@ -84,7 +186,7 @@ const ShopOwnerDashboard = () => {
         try {
             await canteenAPI.updateCanteen(canteen._id, formData);
             setShowEditModal(false);
-            fetchCanteen();
+            fetchMyShop();
         } catch (error) {
             console.error('Error updating canteen:', error);
         }
@@ -265,7 +367,11 @@ const ShopOwnerDashboard = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center justify-between">
                                     <span>Menu Items</span>
-                                    <Button variant="outline" size="sm">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setShowMenuModal(true)}
+                                    >
                                         <PlusIcon size={14} className="mr-2" />
                                         Add Item
                                     </Button>
@@ -273,28 +379,65 @@ const ShopOwnerDashboard = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {canteen.menu?.map((item, index) => (
-                                        <div key={index} className="flex items-center justify-between p-4 bg-surface-50 rounded-lg">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-                                                    <span className="text-lg">🍽️</span>
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-surface-900">{item.name}</p>
-                                                    <p className="text-sm text-surface-500">{item.category}</p>
-                                                    {item.description && (
-                                                        <p className="text-sm text-surface-600 mt-1">{item.description}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-semibold text-surface-900">Rs. {item.price}</p>
-                                                <Badge className={item.isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                                                    {item.isAvailable ? 'Available' : 'Unavailable'}
-                                                </Badge>
-                                            </div>
+                                    {menuItems.length === 0 ? (
+                                        <div className="text-center py-8">
+                                            <PackageIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                            <h3 className="text-lg font-semibold text-gray-600 mb-2">No Menu Items</h3>
+                                            <p className="text-gray-500 mb-4">Start adding items to your menu</p>
+                                            <Button 
+                                                onClick={() => setShowMenuModal(true)}
+                                                className="bg-blue-600 hover:bg-blue-700"
+                                            >
+                                                <PlusIcon className="h-4 w-4 mr-2" />
+                                                Add First Item
+                                            </Button>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        menuItems.map((item) => (
+                                            <div key={item._id} className="flex items-center justify-between p-4 bg-surface-50 rounded-lg hover:bg-surface-100">
+                                                <div className="flex items-center gap-4">
+                                                    {item.image && (
+                                                        <img 
+                                                            src={item.image} 
+                                                            alt={item.name}
+                                                            className="w-16 h-16 object-cover rounded-lg"
+                                                        />
+                                                    )}
+                                                    <div>
+                                                        <h4 className="font-semibold text-surface-900">{item.name}</h4>
+                                                        <p className="text-sm text-surface-600">{item.category}</p>
+                                                        <p className="text-lg font-bold text-blue-600">Rs. {item.price}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setEditingMenuItem(item);
+                                                            setMenuItemForm({
+                                                                name: item.name,
+                                                                description: item.description,
+                                                                price: item.price,
+                                                                category: item.category,
+                                                                image: item.image
+                                                            });
+                                                            setShowMenuModal(true);
+                                                        }}
+                                                    >
+                                                        <EditIcon className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="destructive" 
+                                                        size="sm"
+                                                        onClick={() => handleDeleteMenuItem(item._id)}
+                                                    >
+                                                        <Trash2Icon className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -389,11 +532,8 @@ const ShopOwnerDashboard = () => {
             {/* Edit Modal */}
             {showEditModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-                    >
+                    <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    
                         <h2 className="text-xl font-bold text-surface-900 mb-6">Edit Canteen</h2>
                         
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -532,7 +672,125 @@ const ShopOwnerDashboard = () => {
                                 </Button>
                             </div>
                         </form>
-                    </motion.div>
+                    </div>
+                </div>
+            )}
+
+            {/* Menu Item Modal */}
+            {showMenuModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold">
+                                {editingMenuItem ? 'Edit Menu Item' : 'Add Menu Item'}
+                            </h3>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setShowMenuModal(false);
+                                    setEditingMenuItem(null);
+                                    setMenuItemForm({
+                                        name: '',
+                                        description: '',
+                                        price: '',
+                                        category: 'Main Course',
+                                        image: ''
+                                    });
+                                }}
+                            >
+                                ×
+                            </Button>
+                        </div>
+                        <form onSubmit={handleMenuItemSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Item Name *
+                                </label>
+                                <Input
+                                    value={menuItemForm.name}
+                                    onChange={(e) => setMenuItemForm({...menuItemForm, name: e.target.value})}
+                                    placeholder="Enter item name"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Description
+                                </label>
+                                <textarea
+                                    value={menuItemForm.description}
+                                    onChange={(e) => setMenuItemForm({...menuItemForm, description: e.target.value})}
+                                    placeholder="Describe your menu item"
+                                    rows={3}
+                                    className="w-full p-2 border border-gray-300 rounded-md"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Price (Rs.) *
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        value={menuItemForm.price}
+                                        onChange={(e) => setMenuItemForm({...menuItemForm, price: e.target.value})}
+                                        placeholder="0.00"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Category
+                                    </label>
+                                    <select
+                                        value={menuItemForm.category}
+                                        onChange={(e) => setMenuItemForm({...menuItemForm, category: e.target.value})}
+                                        className="w-full p-2 border border-gray-300 rounded-md"
+                                    >
+                                        <option value="Main Course">Main Course</option>
+                                        <option value="Appetizer">Appetizer</option>
+                                        <option value="Dessert">Dessert</option>
+                                        <option value="Beverage">Beverage</option>
+                                        <option value="Snack">Snack</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Image URL
+                                </label>
+                                <Input
+                                    type="url"
+                                    value={menuItemForm.image}
+                                    onChange={(e) => setMenuItemForm({...menuItemForm, image: e.target.value})}
+                                    placeholder="https://example.com/image.jpg"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-4 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShowMenuModal(false);
+                                        setEditingMenuItem(null);
+                                        setMenuItemForm({
+                                            name: '',
+                                            description: '',
+                                            price: '',
+                                            category: 'Main Course',
+                                            image: ''
+                                        });
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit">
+                                    {editingMenuItem ? 'Update Item' : 'Add Item'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

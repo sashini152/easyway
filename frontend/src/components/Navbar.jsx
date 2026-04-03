@@ -17,7 +17,6 @@ import {
     ChevronRight,
     ArrowRight
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
@@ -28,11 +27,11 @@ const Navbar = () => {
 
     const dashboardPath = user ? {
         super_admin: '/admin',
+        shop_owner: '/shop-owner',
         shop_admin: '/dashboard',
         canteen_admin: '/canteen-admin/dashboard',
-        canteen_owner: '/canteen-owner/dashboard',
-        student: '/canteens'
-    }[user.role] : '/login';
+        user: '/profile'
+    }[user.role] : '/profile';
 
     const handleLogout = () => {
         logout();
@@ -136,63 +135,42 @@ const Navbar = () => {
             </div>
 
             {/* Mobile Menu */}
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <motion.div 
-                        initial={{
-                            opacity: 0,
-                            height: 0,
-                        }} 
-                        animate={{
-                            opacity: 1,
-                            height: 'auto',
-                        }} 
-                        exit={{
-                            opacity: 0,
-                            height: 0,
-                        }} 
-                        className="md:hidden border-t border-surface-200 bg-surface-0 overflow-hidden"
-                    >
-                        <div className="px-4 py-6 flex flex-col gap-4">
-                            {navLinks.map((link) => (
-                                <Link 
-                                    key={link.name} 
-                                    to={link.path} 
-                                    onClick={() => setIsMobileMenuOpen(false)} 
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium ${
-                                        isActive(link.path) ? 'bg-brand-50 text-brand-600' : 'text-surface-700 hover:bg-surface-50'
-                                    }`}
-                                >
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                        isActive(link.path) ? 'bg-brand-100 text-brand-600' : 'bg-surface-100 text-surface-600'
-                                    }`}>
-                                        <link.icon size={16} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="font-medium">{link.name}</div>
-                                        <div className="text-xs text-surface-500">{link.description}</div>
-                                    </div>
-                                    <ChevronRight size={16} className="text-surface-400" />
-                                </Link>
-                            ))}
-                            <div className="h-px bg-surface-200 my-2"/>
-                            <div className="flex flex-col gap-3 px-4">
-                                {user ? (
-                                    <>
-                                        <div className="bg-surface-50 p-4 rounded-xl border border-surface-200">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">
-                                                    <User size={20} />
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-surface-900">{user.name}</div>
-                                                    <div className="text-sm text-surface-500">{user.email}</div>
-                                                </div>
+            {isMobileMenuOpen && (
+                <div className="md:hidden border-t border-surface-200 bg-surface-0 overflow-hidden">
+                    <div className="px-4 py-6 flex flex-col gap-4">
+                        {navLinks.map((link) => (
+                            <Link 
+                                key={link.name} 
+                                to={link.path} 
+                                onClick={() => setIsMobileMenuOpen(false)} 
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium ${
+                                    isActive(link.path) ? 'bg-brand-50 text-brand-600' : 'text-surface-700 hover:bg-surface-50'
+                                }`}
+                            >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                    isActive(link.path) ? 'bg-brand-100 text-brand-600' : 'bg-surface-100 text-surface-600'
+                                }`}>
+                                    <link.icon size={16} />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="font-medium">{link.name}</div>
+                                    <div className="text-xs text-surface-500">{link.description}</div>
+                                </div>
+                                <ChevronRight size={16} className="text-surface-400" />
+                            </Link>
+                        ))}
+                        <div className="h-px bg-surface-200 my-2"/>
+                        <div className="flex flex-col gap-3 px-4">
+                            {user ? (
+                                <>
+                                    <div className="bg-surface-50 p-4 rounded-xl border border-surface-200">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center">
+                                                <User size={20} />
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs text-surface-500">
-                                                <span className="bg-brand-100 text-brand-700 px-2 py-1 rounded-full">
-                                                    {user.role?.replace('_', ' ').toUpperCase()}
-                                                </span>
+                                            <div className="flex-1">
+                                                <div className="font-medium text-surface-800">{user.name}</div>
+                                                <div className="text-xs text-surface-500">{user.email}</div>
                                             </div>
                                         </div>
                                         <Link to={dashboardPath} onClick={() => setIsMobileMenuOpen(false)}>
@@ -202,40 +180,35 @@ const Navbar = () => {
                                         </Link>
                                         <Button
                                             variant="outline"
-                                            onClick={handleLogout}
+                                            onClick={() => {
+                                                handleLogout();
+                                                setIsMobileMenuOpen(false);
+                                            }}
                                             className="w-full bg-surface-100 text-surface-700 hover:bg-red-50 hover:text-red-600 px-5 py-2.5 text-base"
                                         >
-                                            <LogOut size={16} className="mr-2" />
+                                            <LogOut size={14} className="mr-1" />
                                             Log out
                                         </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="text-center mb-4">
-                                            <div className="text-sm text-surface-600 mb-2">
-                                                Join SLIIT Eats today!
-                                            </div>
-                                            <div className="text-xs text-surface-500">
-                                                Reserve tables, order ahead, and enjoy delicious meals
-                                            </div>
-                                        </div>
-                                        <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                                            <Button variant="outline" className="w-full bg-surface-0 text-surface-800 border-2 border-surface-200 hover:border-brand-500 hover:text-brand-600 px-5 py-2.5 text-base">
-                                                Log in
-                                            </Button>
-                                        </Link>
-                                        <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                                            <Button className="w-full bg-gradient-to-r from-brand-500 to-brand-400 text-white hover:from-brand-600 hover:to-brand-500 shadow-soft px-5 py-2.5 text-base">
-                                                Sign Up
-                                            </Button>
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Button variant="ghost" className="w-full text-surface-700 hover:bg-surface-100 px-3 py-1.5 text-sm">
+                                            Log in
+                                        </Button>
+                                    </Link>
+                                    <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Button className="w-full bg-gradient-to-r from-brand-500 to-brand-400 text-white hover:from-brand-600 hover:to-brand-500 shadow-soft px-3 py-1.5 text-sm">
+                                            Sign Up
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                </div>
+            )}
         </header>
     );
 };

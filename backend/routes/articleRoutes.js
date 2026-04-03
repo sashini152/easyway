@@ -21,7 +21,7 @@ const {
 
 // Authenticated routes - users can view articles based on their role
 router.get('/', authenticate, getAllArticles);
-router.get('/:id', getArticleById);
+router.get('/:id', authenticate, getArticleById);
 
 // Authenticated users can create articles (users submit for review)
 router.post('/', authenticate, createArticle);

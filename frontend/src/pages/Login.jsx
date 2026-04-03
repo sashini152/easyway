@@ -76,14 +76,7 @@ const Login = () => {
             </Button>
           </form>
           
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p className="mb-2">Demo Accounts:</p>
-            <div className="space-y-1 text-xs">
-              <p>Admin: admin@sliit.lk / ADMIN123456</p>
-              <p>Student: student@sliit.lk / STD123456</p>
-              <p>Shop Admin: pscanteen@sliit.lk / PNS123456</p>
-            </div>
-          </div>
+         
         </CardContent>
       </Card>
     </div>

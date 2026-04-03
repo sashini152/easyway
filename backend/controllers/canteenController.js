@@ -1,4 +1,5 @@
 const Canteen = require('../models/Canteen');
+const MenuItem = require('../models/MenuItem');
 const User = require('../models/User');
 
 // Create a new canteen (Super Admin only)
@@ -386,6 +387,130 @@ const getShopOwnerCanteen = async (req, res) => {
     }
 };
 
+// Create menu item for canteen
+const createMenuItem = async (req, res) => {
+    try {
+        const { name, description, price, category, image } = req.body;
+        const canteenId = req.params.id;
+
+        // Validate required fields
+        if (!name || !price) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name and price are required'
+            });
+        }
+
+        // Check if user owns this canteen
+        const canteen = await Canteen.findById(canteenId);
+        if (!canteen || canteen.assignedShopOwner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only add menu items to your assigned canteen'
+            });
+        }
+
+        const menuItem = new MenuItem({
+            name,
+            description,
+            price,
+            category: category || 'Main Course',
+            image,
+            canteen: canteenId
+        });
+
+        await menuItem.save();
+
+        res.status(201).json({
+            success: true,
+            data: menuItem
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error creating menu item',
+            error: error.message
+        });
+    }
+};
+
+// Update menu item
+const updateMenuItem = async (req, res) => {
+    try {
+        const { name, description, price, category, image } = req.body;
+        const { itemId } = req.params;
+
+        const menuItem = await MenuItem.findById(itemId);
+        if (!menuItem) {
+            return res.status(404).json({
+                success: false,
+                message: 'Menu item not found'
+            });
+        }
+
+        // Check if user owns this canteen
+        const canteen = await Canteen.findById(menuItem.canteen);
+        if (!canteen || canteen.assignedShopOwner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only update menu items in your assigned canteen'
+            });
+        }
+
+        // Update menu item
+        Object.assign(menuItem, { name, description, price, category, image });
+        await menuItem.save();
+
+        res.status(200).json({
+            success: true,
+            data: menuItem
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error updating menu item',
+            error: error.message
+        });
+    }
+};
+
+// Delete menu item
+const deleteMenuItem = async (req, res) => {
+    try {
+        const { itemId } = req.params;
+
+        const menuItem = await MenuItem.findById(itemId);
+        if (!menuItem) {
+            return res.status(404).json({
+                success: false,
+                message: 'Menu item not found'
+            });
+        }
+
+        // Check if user owns this canteen
+        const canteen = await Canteen.findById(menuItem.canteen);
+        if (!canteen || canteen.assignedShopOwner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only delete menu items from your assigned canteen'
+            });
+        }
+
+        await MenuItem.findByIdAndDelete(itemId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Menu item deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting menu item',
+            error: error.message
+        });
+    }
+};
+
 // Add review to canteen
 const addReview = async (req, res) => {
     try {
@@ -460,5 +585,8 @@ module.exports = {
     deleteCanteen,
     getAdminCanteens,
     getShopOwnerCanteen,
-    addReview
+    addReview,
+    createMenuItem,
+    updateMenuItem,
+    deleteMenuItem
 };

@@ -8,8 +8,12 @@ const {
     deleteCanteen,
     getAdminCanteens,
     getShopOwnerCanteen,
-    addReview
+    addReview,
+    createMenuItem,
+    updateMenuItem,
+    deleteMenuItem
 } = require('../controllers/canteenController');
+const MenuItem = require('../models/MenuItem');
 const { 
     authenticate, 
     superAdminOnly, 
@@ -34,5 +38,25 @@ router.delete('/:id', authenticate, superAdminOnly, deleteCanteen);
 
 // Shop Owner routes - only their assigned canteen
 router.get('/owner/my-canteen', authenticate, shopOwnerOnly, getShopOwnerCanteen);
+router.get('/:id/menu-items', authenticate, shopOwnerOnly, async (req, res) => {
+    try {
+        const menuItems = await MenuItem.find({ canteen: req.params.id });
+        res.status(200).json({
+            success: true,
+            data: menuItems
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching menu items',
+            error: error.message
+        });
+    }
+});
+
+// Menu Item routes - shop owner can manage their canteen menu
+router.post('/:id/menu-items', authenticate, shopOwnerOnly, createMenuItem);
+router.put('/menu-items/:itemId', authenticate, shopOwnerOnly, updateMenuItem);
+router.delete('/menu-items/:itemId', authenticate, shopOwnerOnly, deleteMenuItem);
 
 module.exports = router;

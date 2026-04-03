@@ -148,13 +148,7 @@ const SimpleArticleCreation = () => {
           </div>
 
           <div className="flex gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => window.location.href = '/admin'}
-            >
-              Back to Dashboard
-            </Button>
+           
             <Button
               type="submit"
               className="bg-blue-500 hover:bg-blue-600"

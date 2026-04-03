@@ -15,6 +15,8 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboardNew";
 import ReservationPage from './pages/ReservationPage';
 import BlogFeed from "./pages/BlogFeed";
 import BlogPostDetail from "./pages/BlogPostDetail";
+import ShopDetail from "./pages/ShopDetail";
+import ShopOwnerDashboard from "./pages/ShopOwnerDashboard";
 import WriteArticle from "./pages/WriteArticle";
 import Offers from "./pages/Offers";
 import NotFound from "./pages/NotFound";
@@ -41,6 +43,8 @@ const App = () => (
               <Route path="/admin/news" element={<BlogFeed />} />
               <Route path="/blog" element={<Navigate to="/admin/news" replace />} />
               <Route path="/canteens" element={<Index />} />
+              <Route path="/shop/:id" element={<ShopDetail />} />
+              <Route path="/shop-owner" element={<ShopOwnerDashboard />} />
               <Route path="/reservation" element={<ReservationPage />} />
               <Route path="/admin/offers" element={<Offers />} />
               <Route path="/blog/:id" element={<BlogPostDetail />} />

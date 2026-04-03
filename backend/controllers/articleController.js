@@ -191,7 +191,7 @@ const getArticleById = async (req, res) => {
         }
 
         // Increment view count
-        await article.getPublicDetails();
+        article.getPublicDetails();
 
         res.status(200).json({
             success: true,

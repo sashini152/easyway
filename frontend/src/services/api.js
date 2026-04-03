@@ -176,7 +176,33 @@ export const canteenAPI = {
     },
 
     getShopOwnerCanteen: async () => {
+        console.log('🔍 API: Fetching shop owner canteen');
         return await apiRequest('/canteens/owner/my-canteen');
+    },
+
+    getMenuItems: async (canteenId) => {
+        console.log('🔍 API: Fetching menu items for canteen:', canteenId);
+        return await apiRequest(`/canteens/${canteenId}/menu-items`);
+    },
+
+    createMenuItem: async (canteenId, menuItemData) => {
+        return await apiRequest(`/canteens/${canteenId}/menu-items`, {
+            method: 'POST',
+            body: JSON.stringify(menuItemData),
+        });
+    },
+
+    updateMenuItem: async (itemId, menuItemData) => {
+        return await apiRequest(`/menu-items/${itemId}`, {
+            method: 'PUT',
+            body: JSON.stringify(menuItemData),
+        });
+    },
+
+    deleteMenuItem: async (itemId) => {
+        return await apiRequest(`/menu-items/${itemId}`, {
+            method: 'DELETE',
+        });
     },
 
     addReview: async (id, reviewData) => {

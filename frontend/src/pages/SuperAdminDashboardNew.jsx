@@ -2,17 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, ShoppingCart, TrendingUp, Shield, Plus, Edit, Trash2, MapPin, Phone, Mail, Clock, FileText, Eye, MessageCircle, Calendar } from "lucide-react";
+import { Users, ShoppingCart, TrendingUp, Shield, Plus, Edit, Trash2, MapPin, Phone, Mail, Clock, FileText, Eye, MessageCircle, Calendar, AlertTriangle } from "lucide-react";
 import { canteenAPI, userAPI } from '../services/api';
 import { articleAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const SuperAdminDashboard = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
     totalCanteens: 0,
     activeCanteens: 0
   });
+
+  // Role-based access control
+  useEffect(() => {
+    if (!user || user.role !== 'super_admin') {
+      console.log('🔍 SuperAdminDashboard: Access denied', { userRole: user?.role });
+      // Redirect to appropriate dashboard
+      if (user?.role === 'shop_owner') {
+        navigate('/shop-owner');
+      } else if (user?.role === 'user') {
+        navigate('/profile');
+      } else {
+        navigate('/login');
+      }
+      return;
+    }
+    console.log('🔍 SuperAdminDashboard: Access granted', { userRole: user?.role });
+  }, [user, navigate]);
   const [canteens, setCanteens] = useState([]);
   const [shopOwners, setShopOwners] = useState([]);
   const [articles, setArticles] = useState([]);
@@ -42,6 +63,14 @@ const SuperAdminDashboard = () => {
     contact: {
       phone: '',
       email: ''
+    },
+    // New shop owner creation fields
+    createNewShopOwner: false,
+    newShopOwner: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
     }
   });
   const [articleFormData, setArticleFormData] = useState({
@@ -113,16 +142,57 @@ const SuperAdminDashboard = () => {
   const handleAddCanteen = async (e) => {
     e.preventDefault();
     try {
-      // Prepare data with proper null handling
+      let assignedShopOwnerId = formData.assignedShopOwner;
+      
+      // If creating a new shop owner
+      if (formData.createNewShopOwner) {
+        // Validate new shop owner data
+        if (!formData.newShopOwner.name || !formData.newShopOwner.email || !formData.newShopOwner.password) {
+          alert('Please fill in all shop owner fields');
+          return;
+        }
+        
+        if (formData.newShopOwner.password !== formData.newShopOwner.confirmPassword) {
+          alert('Passwords do not match');
+          return;
+        }
+        
+        // Create new shop owner
+        const shopOwnerData = {
+          name: formData.newShopOwner.name,
+          email: formData.newShopOwner.email,
+          password: formData.newShopOwner.password,
+          role: 'shop_owner'
+        };
+        
+        const shopOwnerResponse = await userAPI.createUser(shopOwnerData);
+        if (shopOwnerResponse.success) {
+          assignedShopOwnerId = shopOwnerResponse.data._id;
+        } else {
+          alert('Failed to create shop owner: ' + shopOwnerResponse.message);
+          return;
+        }
+      } else if (!assignedShopOwnerId) {
+        // If not creating new shop owner and no existing shop owner selected
+        alert('Please select a shop owner or create a new one');
+        return;
+      }
+      
+      // Prepare canteen data with the assigned shop owner
       const canteenData = {
         ...formData,
-        assignedShopOwner: formData.assignedShopOwner || null, // Convert empty string to null
+        assignedShopOwner: assignedShopOwnerId,
       };
+      
+      // Remove shop owner creation fields from canteen data
+      delete canteenData.createNewShopOwner;
+      delete canteenData.newShopOwner;
       
       await canteenAPI.createCanteen(canteenData);
       setShowAddModal(false);
       resetForm();
       fetchDashboardData();
+      alert('Canteen added successfully!');
     } catch (error) {
       console.error('Error adding canteen:', error);
       alert('Failed to add canteen. Please try again.');
@@ -132,17 +202,22 @@ const SuperAdminDashboard = () => {
   const handleEditCanteen = async (e) => {
     e.preventDefault();
     try {
-      // Prepare data with proper null handling
+      // For editing, we only allow changing the assigned shop owner, not creating new ones
       const canteenData = {
         ...formData,
-        assignedShopOwner: formData.assignedShopOwner || null, // Convert empty string to null
+        assignedShopOwner: formData.assignedShopOwner || null,
       };
+      
+      // Remove shop owner creation fields from canteen data
+      delete canteenData.createNewShopOwner;
+      delete canteenData.newShopOwner;
       
       await canteenAPI.updateCanteen(selectedCanteen._id, canteenData);
       setShowEditModal(false);
       setSelectedCanteen(null);
       resetForm();
       fetchDashboardData();
+      alert('Canteen updated successfully!');
     } catch (error) {
       console.error('Error updating canteen:', error);
       alert('Failed to update canteen. Please try again.');
@@ -180,6 +255,14 @@ const SuperAdminDashboard = () => {
       contact: {
         phone: '',
         email: ''
+      },
+      // Reset shop owner creation fields
+      createNewShopOwner: false,
+      newShopOwner: {
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
       }
     });
   };
@@ -401,6 +484,36 @@ const SuperAdminDashboard = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is not a super admin
+  if (!user || user.role !== 'super_admin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600 mb-6">
+            You don't have permission to access the Super Admin Dashboard. This area is restricted to super administrators only.
+          </p>
+          <div className="space-y-3">
+            <Button 
+              onClick={() => navigate('/shop-owner')}
+              className="w-full"
+            >
+              Go to Shop Owner Dashboard
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/')}
+              className="w-full"
+            >
+              Go to Homepage
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -851,22 +964,159 @@ const SuperAdminDashboard = () => {
                   />
                 </div>
                 
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Shop Owner
+                    Shop Owner Assignment
                   </label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.assignedShopOwner}
-                    onChange={(e) => setFormData({...formData, assignedShopOwner: e.target.value})}
-                  >
-                    <option value="">Select Shop Owner</option>
-                    {shopOwners.map(owner => (
-                      <option key={owner._id} value={owner._id}>
-                        {owner.name} - {owner.email}
-                      </option>
-                    ))}
-                  </select>
+                  
+                  {/* Add Modal - Show both options */}
+                  {showAddModal && (
+                    <>
+                      {/* Toggle between existing and new shop owner */}
+                      <div className="mb-4">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="shopOwnerOption"
+                            checked={!formData.createNewShopOwner}
+                            onChange={() => setFormData({...formData, createNewShopOwner: false})}
+                            className="mr-2"
+                          />
+                          Select Existing Shop Owner
+                        </label>
+                        <label className="flex items-center mt-2">
+                          <input
+                            type="radio"
+                            name="shopOwnerOption"
+                            checked={formData.createNewShopOwner}
+                            onChange={() => setFormData({...formData, createNewShopOwner: true})}
+                            className="mr-2"
+                          />
+                          Create New Shop Owner
+                        </label>
+                      </div>
+
+                      {/* Existing Shop Owner Selection */}
+                      {!formData.createNewShopOwner && (
+                        <select
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={formData.assignedShopOwner}
+                          onChange={(e) => setFormData({...formData, assignedShopOwner: e.target.value})}
+                        >
+                          <option value="">Select Shop Owner</option>
+                          {shopOwners.map(owner => (
+                            <option key={owner._id} value={owner._id}>
+                              {owner.name} - {owner.email}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
+                      {/* New Shop Owner Creation */}
+                      {formData.createNewShopOwner && (
+                        <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                          <h4 className="font-medium text-gray-900">Create New Shop Owner</h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Shop Owner Name *
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.newShopOwner.name}
+                                onChange={(e) => setFormData({
+                                  ...formData, 
+                                  newShopOwner: {...formData.newShopOwner, name: e.target.value}
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter shop owner name"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address *
+                              </label>
+                              <input
+                                type="email"
+                                value={formData.newShopOwner.email}
+                                onChange={(e) => setFormData({
+                                  ...formData, 
+                                  newShopOwner: {...formData.newShopOwner, email: e.target.value}
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="shopowner@example.com"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Password *
+                              </label>
+                              <input
+                                type="password"
+                                value={formData.newShopOwner.password}
+                                onChange={(e) => setFormData({
+                                  ...formData, 
+                                  newShopOwner: {...formData.newShopOwner, password: e.target.value}
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter password"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Confirm Password *
+                              </label>
+                              <input
+                                type="password"
+                                value={formData.newShopOwner.confirmPassword}
+                                onChange={(e) => setFormData({
+                                  ...formData, 
+                                  newShopOwner: {...formData.newShopOwner, confirmPassword: e.target.value}
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Confirm password"
+                                required
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="text-sm text-gray-600">
+                            <p>✓ New shop owner will be created with these credentials</p>
+                            <p>✓ Shop owner will be automatically assigned to this canteen</p>
+                            <p>✓ Shop owner can login with these credentials</p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Edit Modal - Only show existing shop owner selection */}
+                  {showEditModal && (
+                    <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <p className="text-sm text-gray-600 mb-3">
+                        For security, you can only reassign this canteen to an existing shop owner.
+                      </p>
+                      <select
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.assignedShopOwner}
+                        onChange={(e) => setFormData({...formData, assignedShopOwner: e.target.value})}
+                      >
+                        <option value="">Select Shop Owner</option>
+                        {shopOwners.map(owner => (
+                          <option key={owner._id} value={owner._id}>
+                            {owner.name} - {owner.email}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
                 
                 <div>

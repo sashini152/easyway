@@ -34,6 +34,18 @@ const removeUser = () => {
 // Make API request
 const apiRequest = async (endpoint, options = {}) => {
     const token = getToken();
+    const user = getUser();
+
+    console.log('🔍 apiRequest:', { 
+        endpoint, 
+        method: options.method || 'GET', 
+        hasToken: !!token, 
+        userRole: user?.role,
+        userEmail: user?.email,
+        userId: user?._id,
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
+    });
+
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -213,6 +225,43 @@ export const canteenAPI = {
     }
 };
 
+// Reservation API calls
+export const reservationAPI = {
+    createReservation: async (reservationData) => {
+        return await apiRequest('/reservations', {
+            method: 'POST',
+            body: JSON.stringify(reservationData),
+        });
+    },
+
+    getReservations: async (params = {}) => {
+        const queryString = new URLSearchParams(params).toString();
+        return await apiRequest(`/reservations${queryString ? `?${queryString}` : ''}`);
+    },
+
+    getReservationById: async (id) => {
+        return await apiRequest(`/reservations/${id}`);
+    },
+
+    updateReservationStatus: async (id, status) => {
+        return await apiRequest(`/reservations/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        });
+    },
+
+    deleteReservation: async (id) => {
+        return await apiRequest(`/reservations/${id}`, {
+            method: 'DELETE',
+        });
+    },
+
+    getAvailableTimeSlots: async (canteenId, date) => {
+        const queryString = new URLSearchParams({ canteenId, date }).toString();
+        return await apiRequest(`/reservations/available-slots?${queryString}`);
+    }
+};
+
 // Article API calls
 export const articleAPI = {
     getAllArticles: async (params = {}) => {
@@ -273,6 +322,13 @@ export const userAPI = {
         return await apiRequest(`/auth/users${queryString ? `?${queryString}` : ''}`);
     },
 
+    createUser: async (userData) => {
+        return await apiRequest('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(userData),
+        });
+    },
+
     assignCanteen: async (assignmentData) => {
         return await apiRequest('/auth/assign-canteen', {
             method: 'POST',
@@ -290,6 +346,7 @@ export const userAPI = {
 export default {
     authAPI,
     canteenAPI,
+    reservationAPI,
     articleAPI,
     userAPI,
     getToken,

@@ -125,7 +125,9 @@ const getAllCanteens = async (req, res) => {
     try {
         const { page = 1, limit = 10, search, status, location } = req.query;
         
-        let query = { status: 'active' }; // Only show active canteens to public
+        let query = {}; // Show all canteens by default, not just active ones
+        
+        console.log('🔍 getAllCanteens: Query params:', { page, limit, search, status, location });
         
         if (search) {
             query.$or = [
@@ -142,6 +144,8 @@ const getAllCanteens = async (req, res) => {
         if (location) {
             query.location = { $regex: location, $options: 'i' };
         }
+        
+        console.log('🔍 getAllCanteens: Final query:', query);
 
         const canteens = await Canteen.find(query)
             .populate('assignedShopOwner', 'name phone')
@@ -224,6 +228,10 @@ const updateCanteen = async (req, res) => {
 
         const updates = req.body;
 
+        console.log('🔍 updateCanteen: Updates received:', updates);
+        console.log('🔍 updateCanteen: Current canteen status:', canteen.status);
+        console.log('🔍 updateCanteen: New status from updates:', updates.status);
+
         // If updating assigned shop owner, handle the reassignment
         if (updates.assignedShopOwner && updates.assignedShopOwner !== canteen.assignedShopOwner?.toString()) {
             // Remove assignment from previous owner
@@ -258,6 +266,9 @@ const updateCanteen = async (req, res) => {
             updates,
             { new: true }
         ).populate('assignedShopOwner', 'name phone');
+
+        console.log('🔍 updateCanteen: Updated canteen:', updatedCanteen);
+        console.log('🔍 updateCanteen: Final status:', updatedCanteen.status);
 
         res.status(200).json({
             success: true,

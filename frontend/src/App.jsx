@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SuperAdminDashboard from "./pages/SuperAdminDashboardNew";
 import ReservationPage from './pages/ReservationPage';
+import ReserveTable from './pages/ReserveTable';
 import BlogFeed from "./pages/BlogFeed";
 import BlogPostDetail from "./pages/BlogPostDetail";
 import ShopDetail from "./pages/ShopDetail";
@@ -41,11 +42,13 @@ const App = () => (
               <Route path="/admin" element={<SuperAdminDashboard />} />
               <Route path="/admin/create-article" element={<SimpleArticleCreation />} />
               <Route path="/admin/news" element={<BlogFeed />} />
+              <Route path="/shop-owner/create-article" element={<SimpleArticleCreation />} />
               <Route path="/blog" element={<Navigate to="/admin/news" replace />} />
               <Route path="/canteens" element={<Index />} />
               <Route path="/shop/:id" element={<ShopDetail />} />
               <Route path="/shop-owner" element={<ShopOwnerDashboard />} />
               <Route path="/reservation" element={<ReservationPage />} />
+              <Route path="/reserve/:canteenId" element={<ReserveTable />} />
               <Route path="/admin/offers" element={<Offers />} />
               <Route path="/blog/:id" element={<BlogPostDetail />} />
               <Route path="*" element={<NotFound />} />

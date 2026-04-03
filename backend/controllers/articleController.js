@@ -10,8 +10,18 @@ const createArticle = async (req, res) => {
             category = 'Food Review',
             tags,
             image,
-            status = 'pending'
+            status = 'pending',
+            canteen,
+            canteenName
         } = req.body;
+
+        console.log('🔍 createArticle: Request data', { 
+            title, 
+            status, 
+            userRole: req.user?.role, 
+            canteen,
+            canteenName 
+        });
 
         // Validate required fields
         if (!title || !content) {
@@ -55,8 +65,38 @@ const createArticle = async (req, res) => {
                 image,
                 status,
                 author: req.user._id,
+                publishedAt: status === 'published' ? new Date() : null,
+                canteen,
+                canteenName
+            };
+
+            const newArticle = new Article(articleData);
+            const savedArticle = await newArticle.save();
+            
+            await savedArticle.populate('author', 'name email avatar');
+
+            res.status(201).json({
+                success: true,
+                message: 'Article created successfully',
+                data: savedArticle
+            });
+        } else if (req.user.role === 'shop_owner') {
+            // Shop owners can create articles for their canteen
+            const articleData = {
+                title,
+                content,
+                excerpt,
+                category,
+                tags: tags || [],
+                image,
+                status, // Shop owners can set status
+                author: req.user._id,
+                canteen,
+                canteenName,
                 publishedAt: status === 'published' ? new Date() : null
             };
+
+            console.log('🔍 createArticle: Shop owner creating article', articleData);
 
             const newArticle = new Article(articleData);
             const savedArticle = await newArticle.save();
@@ -78,7 +118,9 @@ const createArticle = async (req, res) => {
                 tags: tags || [],
                 image,
                 status: 'pending',
-                author: req.user._id
+                author: req.user._id,
+                canteen,
+                canteenName
             };
 
             const newArticle = new Article(articleData);
@@ -88,11 +130,12 @@ const createArticle = async (req, res) => {
 
             res.status(201).json({
                 success: true,
-                message: 'Article submitted for review successfully',
+                message: 'Article submitted for review',
                 data: savedArticle
             });
         }
     } catch (error) {
+        console.error('Error creating article:', error);
         res.status(500).json({
             success: false,
             message: 'Error creating article',
@@ -104,17 +147,31 @@ const createArticle = async (req, res) => {
 // Get all articles (Public access)
 const getAllArticles = async (req, res) => {
     try {
-        const { page = 1, limit = 10, search, category, status, author } = req.query;
+        const { page = 1, limit = 10, search, category, status, author, canteen } = req.query;
         
         let query = {};
+        
+        console.log('🔍 getAllArticles: User info', { 
+            user: req.user, 
+            userRole: req.user?.role, 
+            hasUser: !!req.user 
+        });
         
         // Different queries based on user role
         if (req.user && req.user.role === 'super_admin') {
             // Super Admin can see all articles
             if (status) query.status = status;
+        } else if (req.user && req.user.role === 'shop_owner') {
+            // Shop owners can see their own canteen's articles (all statuses)
+            if (status) query.status = status;
         } else {
             // Regular users and public can only see published articles
             query.status = 'published';
+        }
+        
+        // Add canteen filter if specified
+        if (canteen) {
+            query.canteen = canteen;
         }
         
         if (category) {
@@ -133,14 +190,19 @@ const getAllArticles = async (req, res) => {
             ];
         }
 
+        console.log('🔍 getAllArticles: Final query', { query, userRole: req.user?.role, canteen });
+
         const articles = await Article.find(query)
             .populate('author', 'name email avatar')
+            .populate('canteen', 'name location')
             .populate('comments.user', 'name avatar')
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .sort({ publishedAt: -1, createdAt: -1 });
 
         const total = await Article.countDocuments(query);
+
+        console.log('🔍 getAllArticles: Found articles', articles.length);
 
         res.status(200).json({
             success: true,
@@ -218,12 +280,34 @@ const updateArticle = async (req, res) => {
             });
         }
 
+        console.log('🔍 updateArticle: User trying to edit', { 
+            userId: req.user._id, 
+            userRole: req.user.role, 
+            articleId: article._id,
+            articleAuthor: article.author,
+            articleCanteen: article.canteen
+        });
+
         // Check permissions
         if (!article.canEdit(req.user._id, req.user.role)) {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. You can only edit your own articles'
-            });
+            // Additional check for shop owners - they can edit articles for their canteen
+            if (req.user.role === 'shop_owner' && article.canteen) {
+                // Get the shop owner's canteen
+                const Canteen = require('../models/Canteen');
+                const shopOwnerCanteen = await Canteen.findOne({ assignedShopOwner: req.user._id });
+                
+                if (!shopOwnerCanteen || shopOwnerCanteen._id.toString() !== article.canteen.toString()) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Access denied. You can only edit articles for your canteen'
+                    });
+                }
+            } else {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied. You can only edit your own articles'
+                });
+            }
         }
 
         const updates = req.body;
@@ -243,6 +327,21 @@ const updateArticle = async (req, res) => {
             }
             
             updates.status = 'pending'; // Always keep as pending for user updates
+        }
+
+        // Shop owners can update most fields but not author
+        if (req.user.role === 'shop_owner') {
+            const allowedFields = ['title', 'content', 'excerpt', 'category', 'tags', 'image', 'status'];
+            const updateKeys = Object.keys(updates);
+            
+            for (const key of updateKeys) {
+                if (!allowedFields.includes(key)) {
+                    return res.status(403).json({
+                        success: false,
+                        message: `Shop owners cannot update ${key} field`
+                    });
+                }
+            }
         }
 
         // Super Admin can update status and rejection reason
@@ -265,8 +364,9 @@ const updateArticle = async (req, res) => {
             req.params.id,
             updates,
             { new: true }
-        ).populate('author', 'name email avatar')
-        .populate('comments.user', 'name avatar');
+        ).populate('author', 'name email avatar');
+
+        console.log('🔍 updateArticle: Article updated successfully', updatedArticle._id);
 
         res.status(200).json({
             success: true,
@@ -274,6 +374,7 @@ const updateArticle = async (req, res) => {
             data: updatedArticle
         });
     } catch (error) {
+        console.error('Error updating article:', error);
         res.status(500).json({
             success: false,
             message: 'Error updating article',
@@ -282,7 +383,7 @@ const updateArticle = async (req, res) => {
     }
 };
 
-// Delete article (Super Admin only)
+// Delete article (Super Admin or Shop Owner for their canteen)
 const deleteArticle = async (req, res) => {
     try {
         const article = await Article.findById(req.params.id);
@@ -294,21 +395,63 @@ const deleteArticle = async (req, res) => {
             });
         }
 
-        // Only Super Admin can delete articles
-        if (!article.canDelete(req.user.role)) {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Only Super Admin can delete articles'
+        console.log('🔍 deleteArticle: User trying to delete', { 
+            userId: req.user._id, 
+            userRole: req.user.role, 
+            articleId: article._id,
+            articleCanteen: article.canteen
+        });
+
+        // Super Admin can delete any article
+        if (req.user.role === 'super_admin') {
+            await Article.findByIdAndDelete(req.params.id);
+            
+            res.status(200).json({
+                success: true,
+                message: 'Article deleted successfully'
             });
+            return;
         }
 
-        await Article.findByIdAndDelete(req.params.id);
+        // Shop owners can delete articles for their canteen
+        if (req.user.role === 'shop_owner' && article.canteen) {
+            const Canteen = require('../models/Canteen');
+            const shopOwnerCanteen = await Canteen.findOne({ assignedShopOwner: req.user._id });
+            
+            if (!shopOwnerCanteen || shopOwnerCanteen._id.toString() !== article.canteen.toString()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied. You can only delete articles for your canteen'
+                });
+            }
 
-        res.status(200).json({
-            success: true,
-            message: 'Article deleted successfully'
+            await Article.findByIdAndDelete(req.params.id);
+
+            res.status(200).json({
+                success: true,
+                message: 'Article deleted successfully'
+            });
+            return;
+        }
+
+        // Article authors can delete their own articles (if they're users)
+        if (req.user.role === 'user' && article.author.toString() === req.user._id.toString()) {
+            await Article.findByIdAndDelete(req.params.id);
+
+            res.status(200).json({
+                success: true,
+                message: 'Article deleted successfully'
+            });
+            return;
+        }
+
+        // If none of the above conditions match, deny access
+        return res.status(403).json({
+            success: false,
+            message: 'Access denied. You can only delete your own articles'
         });
     } catch (error) {
+        console.error('Error deleting article:', error);
         res.status(500).json({
             success: false,
             message: 'Error deleting article',

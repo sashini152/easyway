@@ -7,17 +7,17 @@
   --brand-500: #2563eb;
   --brand-600: #1d4ed8;
   --brand-700: #1e40af;
-  
+
   --warm-50: #fef3c7;
   --warm-100: #fde68a;
   --warm-200: #fcd34d;
   --warm-500: #f59e0b;
-  
+
   --success-50: #d1fae5;
   --success-100: #a7f3d0;
   --success-200: #6ee7b7;
   --success-500: #10b981;
-  
+
   --surface-0: #ffffff;
   --surface-50: #f9fafb;
   --surface-100: #f3f4f6;
@@ -28,19 +28,22 @@
   --surface-700: #374151;
   --surface-800: #1f2937;
   --surface-900: #111827;
-  
+
   --border: #e5e7eb;
   --text-h: #111827;
   --social-bg: #f3f4f6;
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  
+
   /* Enhanced shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  
+
   /* Enhanced animations */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -53,7 +56,9 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
   line-height: 1.6;
   color: var(--surface-900);
   background-color: var(--surface-50);
@@ -304,8 +309,14 @@ body {
   border: 1px solid #fecaca;
 }
 
+.status-maintenance {
+  background: #fed7aa;
+  color: #ea580c;
+  border: 1px solid #fdba74;
+}
+
 .status::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -314,7 +325,8 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -374,13 +386,18 @@ body {
 }
 
 .feature-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--brand-500), var(--warm-500), var(--success-500));
+  background: linear-gradient(
+    90deg,
+    var(--brand-500),
+    var(--warm-500),
+    var(--success-500)
+  );
   transform: scaleX(0);
   transition: transform var(--transition-base);
 }
@@ -686,23 +703,23 @@ body {
   .hero-section {
     padding: 80px 0 120px;
   }
-  
+
   .card-body {
     padding: 16px;
   }
-  
+
   .feature-card {
     padding: 24px;
   }
-  
+
   .meal-card-content {
     padding: 16px;
   }
-  
+
   .offer-card-content {
     padding: 16px;
   }
-  
+
   .blog-card-content {
     padding: 16px;
   }
@@ -710,7 +727,12 @@ body {
 
 /* Enhanced loading states */
 .loading-skeleton {
-  background: linear-gradient(90deg, var(--surface-200) 25%, var(--surface-100) 50%, var(--surface-200) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--surface-200) 25%,
+    var(--surface-100) 50%,
+    var(--surface-200) 75%
+  );
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
 }
@@ -772,7 +794,7 @@ body {
   .no-print {
     display: none !important;
   }
-  
+
   .print-break {
     page-break-after: always;
   }

@@ -14,7 +14,7 @@ app.use(helmet());
 app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'], // Allow specific origins including frontend port
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -23,13 +23,26 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve static files (for uploaded images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.'
-});
-app.use(limiter);
+// Rate limiting - temporarily disabled for development
+// const limiter = rateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     max: 1000, // limit each IP to 1000 requests per windowMs (increased for development)
+//     message: 'Too many requests from this IP, please try again later.',
+//     standardHeaders: true,
+//     legacyHeaders: false,
+// });
+
+// Apply rate limiting to all routes except auth routes
+// app.use('/api/', limiter);
+
+// Auth routes have more lenient rate limiting
+// const authLimiter = rateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     max: 2000, // higher limit for auth routes
+//     message: 'Too many auth attempts, please try again later.',
+//     standardHeaders: true,
+//     legacyHeaders: false,
+// });
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -45,10 +58,12 @@ mongoose.connect(process.env.MONGO_URI)
 const authRoutes = require('./routes/authRoutes');
 const canteenRoutes = require('./routes/canteenRoutes');
 const articleRoutes = require('./routes/articleRoutes');
+const reservationRoutes = require('./routes/reservationRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/canteens', canteenRoutes);
 app.use('/api/articles', articleRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

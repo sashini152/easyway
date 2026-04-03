@@ -23,6 +23,14 @@ const articleSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    canteen: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Canteen'
+    },
+    canteenName: {
+        type: String,
+        trim: true
+    },
     status: {
         type: String,
         required: true,
@@ -44,9 +52,16 @@ const articleSchema = new mongoose.Schema({
         type: String,
         validate: {
             validator: function(v) {
-                return !v || /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v) || /^\/uploads\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v);
+                if (!v) return true; // Allow empty image
+                // Accept HTTP/HTTPS URLs
+                if (/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v)) return true;
+                // Accept relative upload paths
+                if (/^\/uploads\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v)) return true;
+                // Accept base64 images
+                if (/^data:image\/(jpg|jpeg|png|gif|webp);base64,/.test(v)) return true;
+                return false;
             },
-            message: 'Please provide a valid image URL'
+            message: 'Please provide a valid image URL or base64 image'
         }
     },
     views: {
@@ -134,6 +149,9 @@ articleSchema.methods.canEdit = function(userId, userRole) {
     
     // Author can edit their own articles
     if (this.author.toString() === userId.toString()) return true;
+    
+    // Shop owner can edit articles associated with their canteen
+    // This will be checked in the controller with proper canteen verification
     
     return false;
 };

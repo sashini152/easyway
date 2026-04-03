@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Clock, MapPin, Phone, User, Utensils } from "lucide-react";
+import { Star, Clock, MapPin, Phone, User, Utensils, Wrench } from "lucide-react";
 
 const ShopCard = ({ shop }) => {
   return (
@@ -17,8 +17,14 @@ const ShopCard = ({ shop }) => {
           }}
         />
         <div className="absolute top-2 right-2">
-          <Badge className={shop.status === "open" ? "status-open" : "status-closed"}>
-            {shop.status === "open" ? "● Open" : "● Closed"}
+          <Badge className={
+            shop.status === "open" ? "status-open" : 
+            shop.status === "maintenance" ? "status-maintenance" : 
+            "status-closed"
+          }>
+            {shop.status === "open" ? "● Open" : 
+             shop.status === "maintenance" ? "● Under Maintenance" : 
+             "● Closed"}
           </Badge>
         </div>
       </div>
@@ -73,12 +79,34 @@ const ShopCard = ({ shop }) => {
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Utensils className="h-4 w-4" />
-            {shop.status === "open" ? "Serving now" : "Currently closed"}
+            {shop.status === "open" ? (
+              <>
+                <Utensils className="h-4 w-4" />
+                Serving now
+              </>
+            ) : shop.status === "maintenance" ? (
+              <>
+                <Wrench className="h-4 w-4" />
+                Under maintenance
+              </>
+            ) : (
+              <>
+                <Clock className="h-4 w-4" />
+                Currently closed
+              </>
+            )}
           </div>
           <Link to={`/shop/${shop._id}`}>
-            <Button size="sm" className="bg-primary hover:bg-primary/90">
-              View Menu
+            <Button 
+              size="sm" 
+              className={
+                shop.status === "open" ? "bg-primary hover:bg-primary/90" : 
+                shop.status === "maintenance" ? "bg-orange-500 hover:bg-orange-600" : 
+                "bg-gray-500 hover:bg-gray-600"
+              }
+              disabled={shop.status === "maintenance"}
+            >
+              {shop.status === "maintenance" ? "Under Maintenance" : "View Menu"}
             </Button>
           </Link>
         </div>

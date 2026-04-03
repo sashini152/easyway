@@ -11,13 +11,16 @@ import {
     CalendarIcon,
     PlusIcon,
     Trash2Icon,
-    PackageIcon
+    PackageIcon,
+    FileText,
+    Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { canteenAPI } from '../services/api';
+import ReservationManagement from '../components/ReservationManagement';
 import { useAuth } from '../contexts/AuthContext';
 
 const ShopOwnerDashboard = () => {
@@ -28,6 +31,18 @@ const ShopOwnerDashboard = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [showMenuModal, setShowMenuModal] = useState(false);
     const [editingMenuItem, setEditingMenuItem] = useState(null);
+    const [articles, setArticles] = useState([]);
+    const [loadingArticles, setLoadingArticles] = useState(false);
+    const [editingArticle, setEditingArticle] = useState(null);
+    const [showArticleModal, setShowArticleModal] = useState(false);
+    const [articleForm, setArticleForm] = useState({
+        title: '',
+        content: '',
+        category: 'News',
+        status: 'published',
+        excerpt: '',
+        image: ''
+    });
     const [menuItemForm, setMenuItemForm] = useState({
         name: '',
         description: '',
@@ -128,67 +143,237 @@ const ShopOwnerDashboard = () => {
     };
 
     useEffect(() => {
-        fetchMyShop();
-    }, []);
+        const fetchShopDetails = async () => {
+            if (!user) return;
 
-    const fetchMyShop = async () => {
-        try {
-            setLoading(true);
-            console.log('🔍 Fetching shop owner canteen...');
-            const response = await canteenAPI.getShopOwnerCanteen();
-            console.log('📊 Shop response:', response);
-            
-            if (response.success) {
-                console.log('✅ Canteen data loaded:', response.data);
-                setCanteen(response.data);
-                console.log('🏪 Canteen state set:', response.data);
-                setFormData({
-                    name: response.data.name || '',
-                    location: response.data.location || '',
-                    description: response.data.description || '',
-                    image: response.data.image || '',
-                    status: response.data.status || 'active',
-                    operatingHours: response.data.operatingHours || {
-                        open: '08:00',
-                        close: '20:00'
-                    },
-                    contact: response.data.contact || {
-                        phone: '',
-                        email: ''
-                    },
-                    address: response.data.address || {
-                        street: '',
-                        city: '',
-                        postalCode: ''
-                    },
-                    facilities: response.data.facilities || []
-                });
-                
-                // Fetch menu items for this canteen
-                if (response.data._id) {
-                    console.log('🍽 Fetching menu items for canteen:', response.data._id);
-                    const menuResponse = await canteenAPI.getMenuItems(response.data._id);
-                    console.log('📝 Menu response:', menuResponse);
-                    if (menuResponse.success) {
-                        setMenuItems(menuResponse.data);
+            try {
+                console.log('🔍 Fetching shop details for user:', user.name, user.email, 'Assigned Canteen:', user.assignedCanteen);
+                const response = await canteenAPI.getShopOwnerCanteen();
+                console.log('🔍 Shop owner canteen response:', response);
+
+                if (response.success && response.data) {
+                    setCanteen(response.data);
+                    setFormData({
+                        name: response.data.name,
+                        description: response.data.description,
+                        location: response.data.location,
+                        contact: response.data.contact,
+                        address: response.data.address || {
+                            street: '',
+                            city: '',
+                            postalCode: ''
+                        },
+                        facilities: response.data.facilities || []
+                    });
+                    
+                    // Fetch menu items for this canteen
+                    if (response.data._id) {
+                        console.log('🍽 Fetching menu items for canteen:', response.data._id);
+                        const menuResponse = await canteenAPI.getMenuItems(response.data._id);
+                        console.log('� Menu response:', menuResponse);
+                        if (menuResponse.success) {
+                            setMenuItems(menuResponse.data);
+                        }
                     }
+                } else {
+                    console.error('No canteen found for shop owner');
+                    setCanteen(null);
                 }
+            } catch (error) {
+                console.error('💥 Error fetching shop details:', error);
+                setCanteen(null);
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            console.error('💥 Error fetching shop details:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+
+        fetchShopDetails();
+    }, [user]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('🔍 Submitting canteen update with data:', formData);
         try {
-            await canteenAPI.updateCanteen(canteen._id, formData);
-            setShowEditModal(false);
-            fetchMyShop();
+            const response = await canteenAPI.updateCanteen(canteen._id, formData);
+            console.log('🔍 Update canteen response:', response);
+            
+            if (response.success) {
+                alert('Canteen updated successfully!');
+                setShowEditModal(false);
+                
+                // Refresh canteen data
+                const fetchShopDetails = async () => {
+                    if (!user) return;
+
+                    try {
+                        console.log('🔍 Fetching shop details for user:', user.name, user.email, 'Assigned Canteen:', user.assignedCanteen);
+                        const shopResponse = await canteenAPI.getShopOwnerCanteen();
+                        console.log('🔍 Shop owner canteen response:', shopResponse);
+
+                        if (shopResponse.success && shopResponse.data) {
+                            setCanteen(shopResponse.data);
+                            setFormData({
+                                name: shopResponse.data.name,
+                                description: shopResponse.data.description,
+                                location: shopResponse.data.location,
+                                contact: shopResponse.data.contact,
+                                address: shopResponse.data.address || {
+                                    street: '',
+                                    city: '',
+                                    postalCode: ''
+                                },
+                                facilities: shopResponse.data.facilities || [],
+                                operatingHours: shopResponse.data.operatingHours || {
+                                    open: '08:00',
+                                    close: '20:00'
+                                },
+                                image: shopResponse.data.image || '',
+                                status: shopResponse.data.status || 'active'
+                            });
+                            
+                            // Fetch menu items for this canteen
+                            if (shopResponse.data._id) {
+                                console.log('🍽 Fetching menu items for canteen:', shopResponse.data._id);
+                                const menuResponse = await canteenAPI.getMenuItems(shopResponse.data._id);
+                                console.log('📝 Menu response:', menuResponse);
+                                if (menuResponse.success) {
+                                    setMenuItems(menuResponse.data || []);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error fetching shop details:', error);
+                    }
+                };
+                
+                fetchShopDetails();
+            } else {
+                alert('Failed to update canteen: ' + (response.message || 'Unknown error'));
+            }
         } catch (error) {
             console.error('Error updating canteen:', error);
+            alert('Failed to update canteen. Please try again.');
+        }
+    };
+
+    // Menu item functions
+
+    // Fetch articles for this canteen
+    const fetchCanteenArticles = async () => {
+        if (!canteen) return;
+        
+        setLoadingArticles(true);
+        try {
+            const response = await fetch(`http://localhost:5000/api/articles?canteen=${canteen._id}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const result = await response.json();
+            
+            console.log('🔍 fetchCanteenArticles: API response', result);
+            
+            if (result.success) {
+                // Handle the nested data structure from backend
+                const articlesData = Array.isArray(result.data?.articles) ? result.data.articles : [];
+                console.log('🔍 fetchCanteenArticles: Articles loaded', articlesData.length);
+                setArticles(articlesData);
+            } else {
+                console.error('Failed to fetch articles:', result.message);
+                setArticles([]);
+            }
+        } catch (error) {
+            console.error('Error fetching articles:', error);
+            setArticles([]);
+        } finally {
+            setLoadingArticles(false);
+        }
+    };
+
+    // Fetch articles when canteen is loaded
+    useEffect(() => {
+        if (canteen) {
+            fetchCanteenArticles();
+        }
+    }, [canteen]);
+
+    // Article management functions
+    const handleEditArticle = (article) => {
+        setEditingArticle(article);
+        setArticleForm({
+            title: article.title,
+            content: article.content,
+            category: article.category,
+            status: article.status,
+            excerpt: article.excerpt || '',
+            image: article.image || ''
+        });
+        setShowArticleModal(true);
+    };
+
+    const handleDeleteArticle = async (articleId) => {
+        if (!confirm('Are you sure you want to delete this article?')) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/articles/${articleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Article deleted successfully!');
+                fetchCanteenArticles(); // Refresh articles list
+            } else {
+                alert('Failed to delete article: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting article:', error);
+            alert('Failed to delete article. Please try again.');
+        }
+    };
+
+    const handleUpdateArticle = async (e) => {
+        e.preventDefault();
+        
+        if (!editingArticle) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const articleData = {
+                ...articleForm,
+                canteen: canteen._id,
+                canteenName: canteen.name
+            };
+
+            const response = await fetch(`http://localhost:5000/api/articles/${editingArticle._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(articleData)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Article updated successfully!');
+                setShowArticleModal(false);
+                setEditingArticle(null);
+                fetchCanteenArticles(); // Refresh articles list
+            } else {
+                alert('Failed to update article: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error updating article:', error);
+            alert('Failed to update article. Please try again.');
         }
     };
 
@@ -260,17 +445,20 @@ const ShopOwnerDashboard = () => {
                             <p className="text-surface-600 mt-1">Manage your assigned canteen</p>
                         </div>
                         <div className="flex items-center gap-4">
-                            <Badge className={getStatusColor(canteen.status)}>
-                                <span className="capitalize">{canteen.status}</span>
-                            </Badge>
-                            <Badge className={isOpen() ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                                {isOpen() ? 'Open Now' : 'Closed'}
-                            </Badge>
                             <Button 
-                                onClick={() => setShowEditModal(true)}
-                                className="bg-brand-500 hover:bg-brand-600"
+                                variant="outline"
+                                onClick={() => window.location.href = '/shop-owner/create-article'}
+                                className="flex items-center gap-2"
                             >
-                                <EditIcon size={16} className="mr-2" />
+                                <PackageIcon className="h-4 w-4" />
+                                Create Article
+                            </Button>
+                            <Button 
+                                variant="outline"
+                                onClick={() => setShowEditModal(true)}
+                                className="flex items-center gap-2"
+                            >
+                                <EditIcon className="h-4 w-4" />
                                 Edit Canteen
                             </Button>
                         </div>
@@ -640,8 +828,14 @@ const ShopOwnerDashboard = () => {
                                     </label>
                                     <Input
                                         type="time"
-                                        value={formData.operatingHours.open}
-                                        onChange={(e) => setFormData({...formData, operatingHours: {...formData.operatingHours, open: e.target.value}})}
+                                        value={formData.operatingHours?.open || '08:00'}
+                                        onChange={(e) => setFormData({
+                                            ...formData, 
+                                            operatingHours: {
+                                                ...formData.operatingHours, 
+                                                open: e.target.value
+                                            }
+                                        })}
                                         required
                                     />
                                 </div>
@@ -652,11 +846,37 @@ const ShopOwnerDashboard = () => {
                                     </label>
                                     <Input
                                         type="time"
-                                        value={formData.operatingHours.close}
-                                        onChange={(e) => setFormData({...formData, operatingHours: {...formData.operatingHours, close: e.target.value}})}
+                                        value={formData.operatingHours?.close || '20:00'}
+                                        onChange={(e) => setFormData({
+                                            ...formData, 
+                                            operatingHours: {
+                                                ...formData.operatingHours, 
+                                                close: e.target.value
+                                            }
+                                        })}
                                         required
                                     />
                                 </div>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-surface-700 mb-2">
+                                    Canteen Status
+                                </label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Active: Canteen is open for business<br/>
+                                    Inactive: Canteen is temporarily closed<br/>
+                                    Maintenance: Canteen is under maintenance
+                                </p>
                             </div>
                             
                             <div className="flex justify-end gap-4 pt-4">
@@ -787,6 +1007,236 @@ const ShopOwnerDashboard = () => {
                                 </Button>
                                 <Button type="submit">
                                     {editingMenuItem ? 'Update Item' : 'Add Item'}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Articles Section */}
+            <div className="mt-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <span>Articles & News</span>
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.location.href = '/shop-owner/create-article'}
+                            >
+                                <PackageIcon className="h-4 w-4 mr-2" />
+                                Create Article
+                            </Button>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingArticles ? (
+                            <div className="text-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                                <p className="text-gray-600">Loading articles...</p>
+                            </div>
+                        ) : articles.length === 0 ? (
+                            <div className="text-center py-8">
+                                <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Articles Yet</h3>
+                                <p className="text-gray-500 mb-4">Share news and updates about your canteen</p>
+                                <Button 
+                                    onClick={() => window.location.href = '/shop-owner/create-article'}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <PackageIcon className="h-4 w-4 mr-2" />
+                                    Create First Article
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {Array.isArray(articles) && articles.map((article) => (
+                                    <div key={article._id} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-gray-900 mb-2">{article.title}</h4>
+                                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{article.content?.substring(0, 100) || ''}...</p>
+                                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <CalendarIcon className="h-3 w-3" />
+                                                    {new Date(article.createdAt).toLocaleDateString()}
+                                                </span>
+                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                                                    {article.category}
+                                                </span>
+                                                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                                                    {article.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 ml-4">
+                                            <Button variant="outline" size="sm" asChild>
+                                                <a href={`/blog/${article._id}`} target="_blank" rel="noopener noreferrer">
+                                                    <Eye className="h-4 w-4" />
+                                                    View
+                                                </a>
+                                            </Button>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => handleEditArticle(article)}
+                                            >
+                                                <EditIcon className="h-4 w-4" />
+                                                Edit
+                                            </Button>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={() => handleDeleteArticle(article._id)}
+                                                className="text-red-600 hover:text-red-700"
+                                            >
+                                                <Trash2Icon className="h-4 w-4" />
+                                                Delete
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Reservations Section */}
+            <div className="mt-8">
+                <ReservationManagement canteenId={canteen?._id} />
+            </div>
+            
+            {/* Debug Info */}
+            {import.meta.env.DEV && (
+                <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
+                    <p>Debug Info:</p>
+                    <p>Canteen ID: {canteen?._id}</p>
+                    <p>Canteen Name: {canteen?.name}</p>
+                    <p>User: {user?.name} ({user?.role})</p>
+                </div>
+            )}
+
+            {/* Edit Article Modal */}
+            {showArticleModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">
+                            {editingArticle ? 'Edit Article' : 'Create Article'}
+                        </h2>
+                        
+                        <form onSubmit={handleUpdateArticle} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Article Title *
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={articleForm.title}
+                                    onChange={(e) => setArticleForm({...articleForm, title: e.target.value})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                    placeholder="Enter article title"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Content *
+                                </label>
+                                <textarea
+                                    value={articleForm.content}
+                                    onChange={(e) => setArticleForm({...articleForm, content: e.target.value})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
+                                    rows={6}
+                                    placeholder="Enter article content (minimum 50 characters)"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Excerpt
+                                </label>
+                                <textarea
+                                    value={articleForm.excerpt}
+                                    onChange={(e) => setArticleForm({...articleForm, excerpt: e.target.value})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    rows={3}
+                                    placeholder="Brief summary of the article"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Category
+                                </label>
+                                <select
+                                    value={articleForm.category}
+                                    onChange={(e) => setArticleForm({...articleForm, category: e.target.value})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="Food Review">Food Review</option>
+                                    <option value="Campus Life">Campus Life</option>
+                                    <option value="Health Tips">Health Tips</option>
+                                    <option value="Events">Events</option>
+                                    <option value="News">News</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Article Image URL or Base64
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={articleForm.image}
+                                    onChange={(e) => setArticleForm({...articleForm, image: e.target.value})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="https://example.com/image.jpg or data:image/jpeg;base64,..."
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Enter an image URL or paste a base64 image (jpg, jpeg, png, gif, webp)
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Status
+                                </label>
+                                <select
+                                    value={articleForm.status}
+                                    onChange={(e) => setArticleForm({...articleForm, status: e.target.value})}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="draft">Draft</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="published">Published</option>
+                                </select>
+                            </div>
+
+                            <div className="flex justify-end gap-4 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShowArticleModal(false);
+                                        setEditingArticle(null);
+                                        setArticleForm({
+                                            title: '',
+                                            content: '',
+                                            category: 'News',
+                                            status: 'published',
+                                            excerpt: '',
+                                            image: ''
+                                        });
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit">
+                                    {editingArticle ? 'Update Article' : 'Create Article'}
                                 </Button>
                             </div>
                         </form>

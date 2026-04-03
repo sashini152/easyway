@@ -186,10 +186,18 @@ const ShopDetail = () => {
                   </div>
                 )}
 
-                <Button className="w-full" size="lg">
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  Order Now
-                </Button>
+                <div className="space-y-3">
+                  <Link to={`/reserve/${id}`} className="block">
+                    <Button className="w-full" size="lg" variant="outline">
+                      <Clock className="mr-2 h-4 w-4" />
+                      Reserve Table
+                    </Button>
+                  </Link>
+                  <Button className="w-full" size="lg">
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Order Now
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

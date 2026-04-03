@@ -1,15 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
+import { useAuth } from '../contexts/AuthContext';
+import { canteenAPI } from '../services/api';
 
 const SimpleArticleCreation = () => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     category: 'News',
-    status: 'published'
+    status: 'published',
+    image: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [userCanteen, setUserCanteen] = useState(null);
+
+  // Fetch shop owner's canteen if user is a shop owner
+  useEffect(() => {
+    if (user?.role === 'shop_owner') {
+      const fetchCanteen = async () => {
+        try {
+          const response = await canteenAPI.getShopOwnerCanteen();
+          if (response.success && response.data) {
+            setUserCanteen(response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching canteen:', error);
+        }
+      };
+      fetchCanteen();
+    }
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,8 +51,15 @@ const SimpleArticleCreation = () => {
         title: formData.title,
         content: formData.content,
         category: formData.category,
-        status: formData.status
+        status: formData.status,
+        image: formData.image
       };
+
+      // Add canteen association for shop owners
+      if (user?.role === 'shop_owner' && userCanteen) {
+        articleData.canteen = userCanteen._id;
+        articleData.canteenName = userCanteen.name;
+      }
 
       console.log('Creating article:', articleData);
 
@@ -48,17 +77,25 @@ const SimpleArticleCreation = () => {
       console.log('API Response:', result);
 
       if (result.success) {
-        setMessage('Article created successfully!');
+        const redirectMessage = user?.role === 'shop_owner' 
+          ? 'Article created successfully! Redirecting to your dashboard...' 
+          : 'Article created successfully! Redirecting to admin dashboard...';
+        setMessage(redirectMessage);
         setFormData({
           title: '',
           content: '',
           category: 'News',
-          status: 'published'
+          status: 'published',
+          image: ''
         });
         
-        // Redirect to dashboard after 2 seconds
+        // Redirect to appropriate dashboard after 2 seconds
         setTimeout(() => {
-          window.location.href = '/admin';
+          if (user?.role === 'shop_owner') {
+            window.location.href = '/shop-owner';
+          } else {
+            window.location.href = '/admin';
+          }
         }, 2000);
       } else {
         setMessage('Failed to create article: ' + result.message);
@@ -75,6 +112,21 @@ const SimpleArticleCreation = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Article</h1>
+        
+        {/* Canteen Association Indicator for Shop Owners */}
+        {user?.role === 'shop_owner' && userCanteen && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-sm font-medium text-blue-900">
+                This article will be published for: <strong>{userCanteen.name}</strong>
+              </span>
+            </div>
+            <p className="text-xs text-blue-700 mt-1">
+              Customers visiting your canteen will see this article
+            </p>
+          </div>
+        )}
         
         {message && (
           <div className={`p-4 rounded-md mb-4 ${
@@ -129,6 +181,22 @@ const SimpleArticleCreation = () => {
               <option value="News">News</option>
               <option value="Other">Other</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Article Image URL or Base64
+            </label>
+            <input
+              type="text"
+              value={formData.image}
+              onChange={(e) => setFormData({...formData, image: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://example.com/image.jpg or data:image/jpeg;base64,..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter an image URL or paste a base64 image (jpg, jpeg, png, gif, webp)
+            </p>
           </div>
 
           <div>
